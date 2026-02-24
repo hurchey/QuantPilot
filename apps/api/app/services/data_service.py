@@ -1,3 +1,4 @@
+# apps/api/app/services/data_service.py
 from __future__ import annotations
 
 import csv
@@ -5,23 +6,20 @@ import io
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
+from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
-from ..deps import get_current_workspace, get_db
 from ..models import MarketBar
-
-router = APIRouter(prefix="/data", tags=["data"])
 
 
 REQUIRED_CSV_COLUMNS = {"timestamp", "open", "high", "low", "close", "volume"}
 
 
-def _utcnow_naive() -> datetime:
+def utcnow_naive() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
-def _parse_timestamp(value: str) -> datetime:
+def parse_timestamp(value: str) -> datetime:
     v = value.strip()
     if not v:
         raise ValueError("Empty timestamp")
@@ -45,7 +43,7 @@ def _parse_timestamp(value: str) -> datetime:
     raise ValueError(f"Invalid timestamp format: {value}")
 
 
-def _bar_to_dict(row: MarketBar) -> dict[str, Any]:
+def market_bar_to_dict(row: MarketBar) -> dict[str, Any]:
     return {
         "id": row.id,
         "workspace_id": row.workspace_id,
@@ -60,13 +58,13 @@ def _bar_to_dict(row: MarketBar) -> dict[str, Any]:
     }
 
 
-@router.post("/upload")
 async def upload_csv_market_data(
-    file: UploadFile = File(...),
-    symbol: str = Form(...),
-    timeframe: str = Form("1d"),
-    db: Session = Depends(get_db),
-    workspace=Depends(get_current_workspace),
+    db: Session,
+    *,
+    workspace_id: int,
+    file: UploadFile,
+    symbol: str,
+    timeframe: str = "1d",
 ) -> dict[str, Any]:
     symbol = symbol.strip().upper()
     timeframe = timeframe.strip()
@@ -95,11 +93,10 @@ async def upload_csv_market_data(
             detail=f"CSV missing required columns: {sorted(missing)}",
         )
 
-    # De-dup against existing timestamps for this symbol/timeframe/workspace
     existing_rows = (
         db.query(MarketBar.timestamp)
         .filter(
-            MarketBar.workspace_id == workspace.id,
+            MarketBar.workspace_id == workspace_id,
             MarketBar.symbol == symbol,
             MarketBar.timeframe == timeframe,
         )
@@ -107,59 +104,53 @@ async def upload_csv_market_data(
     )
     existing_ts = {r[0] for r in existing_rows}
 
-    inserted = 0
-    skipped_duplicates = 0
     seen_in_file: set[datetime] = set()
+    to_insert: list[MarketBar] = []
+    skipped_duplicates = 0
 
     for idx, row in enumerate(reader, start=2):
         try:
-            ts = _parse_timestamp(str(row.get("timestamp", "")))
+            ts = parse_timestamp(str(row.get("timestamp", "")))
             if ts in existing_ts or ts in seen_in_file:
                 skipped_duplicates += 1
                 continue
+
             seen_in_file.add(ts)
 
-            bar = MarketBar(
-                workspace_id=workspace.id,
-                symbol=symbol,
-                timeframe=timeframe,
-                timestamp=ts,
-                open=float(row.get("open", 0)),
-                high=float(row.get("high", 0)),
-                low=float(row.get("low", 0)),
-                close=float(row.get("close", 0)),
-                volume=float(row.get("volume", 0) or 0),
+            to_insert.append(
+                MarketBar(
+                    workspace_id=workspace_id,
+                    symbol=symbol,
+                    timeframe=timeframe,
+                    timestamp=ts,
+                    open=float(row.get("open", 0)),
+                    high=float(row.get("high", 0)),
+                    low=float(row.get("low", 0)),
+                    close=float(row.get("close", 0)),
+                    volume=float(row.get("volume", 0) or 0),
+                )
             )
-            db.add(bar)
-            inserted += 1
         except Exception as e:
-            db.rollback()
-            raise HTTPException(
-                status_code=400,
-                detail=f"CSV parse error on line {idx}: {e}",
-            ) from e
+            raise HTTPException(status_code=400, detail=f"CSV parse error on line {idx}: {e}") from e
 
-    db.commit()
+    if to_insert:
+        db.add_all(to_insert)
+        db.commit()
 
     return {
         "message": "Upload complete",
         "symbol": symbol,
         "timeframe": timeframe,
-        "rows_inserted": inserted,
+        "rows_inserted": len(to_insert),
         "rows_skipped_duplicates": skipped_duplicates,
-        "uploaded_at": _utcnow_naive().isoformat(),
+        "uploaded_at": utcnow_naive().isoformat(),
     }
 
 
-@router.get("/symbols")
-def list_symbols(
-    db: Session = Depends(get_db),
-    workspace=Depends(get_current_workspace),
-) -> list[dict[str, Any]]:
-    # Distinct symbol/timeframe pairs
+def list_symbols(db: Session, *, workspace_id: int) -> list[dict[str, Any]]:
     rows = (
         db.query(MarketBar.symbol, MarketBar.timeframe)
-        .filter(MarketBar.workspace_id == workspace.id)
+        .filter(MarketBar.workspace_id == workspace_id)
         .distinct()
         .order_by(MarketBar.symbol.asc(), MarketBar.timeframe.asc())
         .all()
@@ -167,20 +158,20 @@ def list_symbols(
     return [{"symbol": r[0], "timeframe": r[1]} for r in rows]
 
 
-@router.get("/bars")
 def get_bars(
-    symbol: str = Query(...),
-    timeframe: str = Query("1d"),
-    start: str | None = Query(None),
-    end: str | None = Query(None),
-    limit: int = Query(500, ge=1, le=5000),
-    db: Session = Depends(get_db),
-    workspace=Depends(get_current_workspace),
+    db: Session,
+    *,
+    workspace_id: int,
+    symbol: str,
+    timeframe: str = "1d",
+    start: str | None = None,
+    end: str | None = None,
+    limit: int = 500,
 ) -> list[dict[str, Any]]:
     q = (
         db.query(MarketBar)
         .filter(
-            MarketBar.workspace_id == workspace.id,
+            MarketBar.workspace_id == workspace_id,
             MarketBar.symbol == symbol.strip().upper(),
             MarketBar.timeframe == timeframe.strip(),
         )
@@ -188,9 +179,9 @@ def get_bars(
     )
 
     if start:
-        q = q.filter(MarketBar.timestamp >= _parse_timestamp(start))
+        q = q.filter(MarketBar.timestamp >= parse_timestamp(start))
     if end:
-        q = q.filter(MarketBar.timestamp <= _parse_timestamp(end))
+        q = q.filter(MarketBar.timestamp <= parse_timestamp(end))
 
     rows = q.limit(limit).all()
-    return [_bar_to_dict(r) for r in rows]
+    return [market_bar_to_dict(r) for r in rows]

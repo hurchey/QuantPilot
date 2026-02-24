@@ -1,28 +1,57 @@
+# apps/api/app/config.py
+from __future__ import annotations
+
 import os
 from dataclasses import dataclass
-from dotenv import load_dotenv
 
-load_dotenv()  # loads apps/api/.env when run from apps/api
-
-
-def _require(name: str) -> str:
-    value = os.getenv(name)
-    if not value:
-        raise RuntimeError(f"Missing required env var: {name}")
-    return value
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    # dotenv is optional
+    pass
 
 
-@dataclass
+def _get_bool(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
+@dataclass(frozen=True)
 class Settings:
-    database_url: str
-    frontend_url: str
-    jwt_secret: str
-    jwt_alg: str
+    app_name: str = os.getenv("APP_NAME", "QuantPilot API")
+    environment: str = os.getenv("ENVIRONMENT", "development")
+
+    # DB
+    database_url: str = os.getenv("DATABASE_URL", "").strip()
+
+    # Auth / JWT
+    jwt_secret: str = os.getenv("JWT_SECRET", "").strip()
+    jwt_algorithm: str = os.getenv("JWT_ALGORITHM", "HS256")
+    access_token_exp_minutes: int = int(os.getenv("ACCESS_TOKEN_EXP_MINUTES", "10080"))  # 7 days
+
+    # Frontend / CORS
+    frontend_url: str = os.getenv("FRONTEND_URL", "http://localhost:8000").strip()
+
+    # Cookie settings
+    auth_cookie_name: str = os.getenv("AUTH_COOKIE_NAME", "access_token")
+    cookie_secure: bool = _get_bool("COOKIE_SECURE", False)  # False for localhost
+    cookie_domain: str | None = os.getenv("COOKIE_DOMAIN", None)
+    cookie_samesite: str = os.getenv("COOKIE_SAMESITE", "lax")  # "lax" is best for local dev
+
+    def validate(self) -> None:
+        missing: list[str] = []
+        if not self.database_url:
+            missing.append("DATABASE_URL")
+        if not self.jwt_secret:
+            missing.append("JWT_SECRET")
+
+        if missing:
+            joined = ", ".join(missing)
+            raise RuntimeError(f"Missing required environment variable(s): {joined}")
 
 
-settings = Settings(
-    database_url=_require("DATABASE_URL"),
-    frontend_url=os.getenv("FRONTEND_URL", "http://localhost:8000"),
-    jwt_secret=_require("JWT_SECRET"),
-    jwt_alg=os.getenv("JWT_ALG", "HS256"),
-)
+settings = Settings()
+settings.validate()

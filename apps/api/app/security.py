@@ -1,77 +1,42 @@
+# apps/api/app/security.py
+from __future__ import annotations
+
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from fastapi import Response
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
 from .config import settings
 
-COOKIE_NAME = "access_token"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
-
-# First scheme is used for NEW hashes (argon2)
-# bcrypt remains for verifying older hashes if you already created any.
-pwd_context = CryptContext(
-    schemes=["argon2", "bcrypt"],
-    deprecated="auto",
-    bcrypt__truncate_error=True,  # explicit if bcrypt edge cases happen
-)
+# Use pbkdf2_sha256 to avoid bcrypt's 72-byte password limit
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 
 def hash_password(password: str) -> str:
-    # Force new hashes to use argon2
-    return pwd_context.hash(password, scheme="argon2")
+    return pwd_context.hash(password)
 
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    try:
-        return pwd_context.verify(plain_password, hashed_password)
-    except (ValueError, TypeError):
-        # Handles bcrypt 72-byte errors and malformed hashes gracefully
-        return False
+def verify_password(plain_password: str, password_hash: str) -> bool:
+    return pwd_context.verify(plain_password, password_hash)
 
 
-def password_needs_rehash(hashed_password: str) -> bool:
-    # Useful for migrating old bcrypt hashes to argon2 after login
-    try:
-        return pwd_context.needs_update(hashed_password)
-    except Exception:
-        return False
+def create_access_token(*, subject: str, expires_minutes: int | None = None) -> str:
+    exp_minutes = expires_minutes or settings.access_token_exp_minutes
+    now = datetime.now(timezone.utc)
+    expire = now + timedelta(minutes=exp_minutes)
 
-
-def create_access_token(user_id: int) -> str:
-    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     payload: dict[str, Any] = {
-        "sub": str(user_id),
+        "sub": subject,  # user id string
         "exp": expire,
+        "iat": now,
+        "type": "access",
     }
-    return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_alg)
+    return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
 
 
-def decode_access_token(token: str) -> int:
+def decode_access_token(token: str) -> dict[str, Any]:
     try:
-        payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_alg])
-        sub = payload.get("sub")
-        if sub is None:
-            raise ValueError("Invalid token payload")
-        return int(sub)
-    except (JWTError, ValueError, TypeError):
-        raise ValueError("Invalid token")
-
-
-def set_auth_cookie(response: Response, token: str) -> None:
-    # For local dev on http://localhost, secure must be False
-    response.set_cookie(
-        key=COOKIE_NAME,
-        value=token,
-        httponly=True,
-        samesite="lax",
-        secure=False,
-        max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        path="/",
-    )
-
-
-def clear_auth_cookie(response: Response) -> None:
-    response.delete_cookie(key=COOKIE_NAME, path="/")
+        return jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
+    except JWTError as e:
+        raise ValueError("Invalid or expired token") from e
