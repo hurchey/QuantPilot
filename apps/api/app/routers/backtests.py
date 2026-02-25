@@ -107,8 +107,12 @@ def run_backtest_endpoint(
     start_dt = _parse_dt(payload.get("start_date"), "start_date")
     end_dt = _parse_dt(payload.get("end_date"), "end_date")
 
-    initial_capital = float(payload.get("initial_capital", 10_000))
-    fees_bps = float(payload.get("fees_bps", 1))
+    initial_capital = float(
+        payload.get("initial_capital") or payload.get("initial_cash", 10_000)
+    )
+    fees_bps = float(
+        payload.get("fees_bps") or payload.get("commission_bps", 1)
+    )
     slippage_bps = float(payload.get("slippage_bps", 1))
 
     bars = load_market_bars(

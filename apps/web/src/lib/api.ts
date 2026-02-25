@@ -63,12 +63,19 @@ export async function apiFetch<T = unknown>(
   const payload = isJson ? await response.json().catch(() => null) : await response.text().catch(() => "");
 
   if (!response.ok) {
-    const message =
-      (payload &&
-        typeof payload === "object" &&
-        ("detail" in payload ? String((payload as any).detail) : "")) ||
-      (typeof payload === "string" ? payload : "") ||
-      `Request failed with status ${response.status}`;
+    let message = `Request failed with status ${response.status}`;
+    if (payload && typeof payload === "object" && "detail" in payload) {
+      const d = (payload as { detail: unknown }).detail;
+      if (typeof d === "string") message = d;
+      else if (Array.isArray(d) && d.length > 0) {
+        const first = d[0];
+        message = typeof first === "object" && first && "msg" in first
+          ? String((first as { msg: unknown }).msg)
+          : String(first);
+      }
+    } else if (typeof payload === "string" && payload) {
+      message = payload;
+    }
     throw new Error(message);
   }
 

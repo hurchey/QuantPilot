@@ -1,100 +1,75 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import ErrorBanner from "@/components/ui/ErrorBanner";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { apiFetch } from "@/lib/api";
+import { STRATEGY_TYPES, TIMEFRAME_OPTIONS } from "@/lib/constants";
 
-type CsvUploadResponse = {
-  message?: string;
-  rows_inserted?: number;
-  symbol?: string;
-  timeframe?: string;
-  [key: string]: unknown;
-};
-
-type CsvUploadFormProps = {
-  apiPath?: string; // default: /quant/data/upload
-  defaultSymbol?: string;
-  defaultTimeframe?: string;
-  onUploadedAction?: (result: CsvUploadResponse) => void;
+type StrategyFormProps = {
+  onCreated?: () => void;
+  onCreatedAction?: () => void;
+  onSuccess?: () => void;
+  onSuccessAction?: () => void;
   className?: string;
 };
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/+$/, "") || "http://localhost:3000";
-
-export default function CsvUploadForm({
-  apiPath = "/quant/data/upload",
-  defaultSymbol = "SPY",
-  defaultTimeframe = "1d",
-  onUploadedAction,
+export default function StrategyForm({
+  onCreated,
+  onCreatedAction,
+  onSuccess,
+  onSuccessAction,
   className = "",
-}: CsvUploadFormProps) {
-  const [file, setFile] = useState<File | null>(null);
-  const [symbol, setSymbol] = useState(defaultSymbol);
-  const [timeframe, setTimeframe] = useState(defaultTimeframe);
+}: StrategyFormProps) {
+  const [name, setName] = useState("");
+  const [strategyType, setStrategyType] = useState(STRATEGY_TYPES[0]?.value ?? "sma_crossover");
+  const [symbol, setSymbol] = useState("SPY");
+  const [timeframe, setTimeframe] = useState("1d");
+  const [fastWindow, setFastWindow] = useState("10");
+  const [slowWindow, setSlowWindow] = useState("20");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  const acceptedText = useMemo(
-    () => "CSV files only. Typical columns: timestamp, open, high, low, close, volume.",
-    []
-  );
+  const handleSuccess = () => {
+    onCreated?.();
+    onCreatedAction?.();
+    onSuccess?.();
+    onSuccessAction?.();
+  };
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-
     setError("");
     setSuccessMessage("");
 
-    if (!file) {
-      setError("Please choose a CSV file to upload.");
-      return;
-    }
-
-    if (!file.name.toLowerCase().endsWith(".csv")) {
-      setError("Only .csv files are supported.");
-      return;
+    const parameters_json: Record<string, unknown> = {};
+    if (strategyType === "sma_crossover") {
+      parameters_json.fast_window = Number(fastWindow) || 10;
+      parameters_json.slow_window = Number(slowWindow) || 20;
     }
 
     setLoading(true);
-
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("symbol", symbol.trim());
-      formData.append("timeframe", timeframe.trim());
-
-      const res = await fetch(`${API_BASE}${apiPath}`, {
+      await apiFetch("/quant/strategies", {
         method: "POST",
-        credentials: "include",
-        body: formData,
+        body: JSON.stringify({
+          name: name.trim() || `${symbol} ${strategyType}`,
+          strategy_type: strategyType,
+          symbol: symbol.trim().toUpperCase(),
+          timeframe: timeframe.trim(),
+          parameters_json,
+        }),
       });
 
-      const contentType = res.headers.get("content-type") || "";
-      const data = contentType.includes("application/json")
-        ? ((await res.json()) as CsvUploadResponse)
-        : ({ message: await res.text() } as CsvUploadResponse);
-
-      if (!res.ok) {
-        throw new Error(
-          data?.message || `Upload failed with status ${res.status}`
-        );
-      }
-
-      const rowsInserted =
-        typeof data.rows_inserted === "number" ? ` (${data.rows_inserted} rows)` : "";
-      setSuccessMessage(data.message || `Upload successful${rowsInserted}`);
-
-      setFile(null);
-      // reset file input manually by form reset if needed
-      (e.target as HTMLFormElement).reset();
-
-      onUploadedAction?.(data);
+      setSuccessMessage("Strategy created successfully.");
+      setName("");
+      setFastWindow("10");
+      setSlowWindow("20");
+      handleSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed");
+      setError(err instanceof Error ? err.message : "Failed to create strategy");
     } finally {
       setLoading(false);
     }
@@ -103,13 +78,15 @@ export default function CsvUploadForm({
   return (
     <form onSubmit={handleSubmit} className={`qp-panel space-y-4 ${className}`}>
       <div className="qp-panel-header">
-        <h2>Upload Market Data (CSV)</h2>
+        <h2>Create Strategy</h2>
       </div>
 
-      <p className="text-sm text-slate-400">{acceptedText}</p>
+      <p className="text-sm text-slate-400">
+        Define a trading strategy with symbol, timeframe, and parameters for backtesting.
+      </p>
 
       {error ? (
-        <ErrorBanner title="Upload Error" message={error} onDismissAction={() => setError("")} />
+        <ErrorBanner title="Error" message={error} onDismissAction={() => setError("")} />
       ) : null}
 
       {successMessage ? (
@@ -120,6 +97,32 @@ export default function CsvUploadForm({
 
       <div className="grid gap-3 md:grid-cols-2">
         <div>
+          <label className="mb-1 block text-sm text-slate-300">Name</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. SPY SMA 10/20"
+            className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm text-slate-300">Strategy type</label>
+          <select
+            value={strategyType}
+            onChange={(e) => setStrategyType(e.target.value)}
+            className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100"
+          >
+            {STRATEGY_TYPES.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
           <label className="mb-1 block text-sm text-slate-300">Symbol</label>
           <input
             type="text"
@@ -127,6 +130,7 @@ export default function CsvUploadForm({
             onChange={(e) => setSymbol(e.target.value.toUpperCase())}
             placeholder="SPY"
             required
+            className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100"
           />
         </div>
 
@@ -135,40 +139,49 @@ export default function CsvUploadForm({
           <select
             value={timeframe}
             onChange={(e) => setTimeframe(e.target.value)}
-            required
+            className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100"
           >
-            <option value="1m">1m</option>
-            <option value="5m">5m</option>
-            <option value="15m">15m</option>
-            <option value="1h">1h</option>
-            <option value="4h">4h</option>
-            <option value="1d">1d</option>
-            <option value="1wk">1wk</option>
+            {TIMEFRAME_OPTIONS.map((tf) => (
+              <option key={tf} value={tf}>
+                {tf}
+              </option>
+            ))}
           </select>
         </div>
-      </div>
 
-      <div>
-        <label className="mb-1 block text-sm text-slate-300">CSV File</label>
-        <input
-          type="file"
-          accept=".csv,text/csv"
-          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          required
-        />
-        {file ? (
-          <p className="mt-2 text-xs text-slate-400">
-            Selected: <span className="text-slate-200">{file.name}</span>
-          </p>
-        ) : null}
+        {strategyType === "sma_crossover" && (
+          <>
+            <div>
+              <label className="mb-1 block text-sm text-slate-300">Fast window</label>
+              <input
+                type="number"
+                value={fastWindow}
+                onChange={(e) => setFastWindow(e.target.value)}
+                min={1}
+                max={200}
+                className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-slate-300">Slow window</label>
+              <input
+                type="number"
+                value={slowWindow}
+                onChange={(e) => setSlowWindow(e.target.value)}
+                min={1}
+                max={200}
+                className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100"
+              />
+            </div>
+          </>
+        )}
       </div>
 
       <div className="flex items-center gap-2">
         <button type="submit" className="qp-btn qp-btn-primary" disabled={loading}>
-          {loading ? "Uploading..." : "Upload CSV"}
+          {loading ? "Creating..." : "Create Strategy"}
         </button>
-
-        {loading ? <LoadingSpinner size="sm" text="Processing file..." /> : null}
+        {loading ? <LoadingSpinner size="sm" text="Creating..." /> : null}
       </div>
     </form>
   );

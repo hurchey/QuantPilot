@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import QuickAddMarketData from "@/components/data/QuickAddMarketData";
 import StrategyForm from "@/components/strategies/StrategyForm";
 import ErrorBanner from "@/components/ui/ErrorBanner";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -103,6 +104,11 @@ export default function StrategiesPage() {
           value={String(strategies.filter((s) => s.timeframe).length)}
           subtitle="Configured timeframe"
         />
+      </div>
+
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+        <h2 className="mb-3 text-sm font-medium text-slate-200">Quick add market data</h2>
+        <QuickAddMarketData onSuccess={() => loadStrategies(false)} />
       </div>
 
       <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">

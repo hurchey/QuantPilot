@@ -3,9 +3,12 @@
 import { useEffect, useState } from "react";
 
 import CsvUploadForm from "@/components/data/CsvUploadForm";
+import DemoDataForm from "@/components/data/DemoDataForm";
+import ParquetUploadForm from "@/components/data/ParquetUploadForm";
+import SymbolFetchForm from "@/components/data/SymbolFetchForm";
+import EmptyState from "@/components/ui/EmptyState";
 import ErrorBanner from "@/components/ui/ErrorBanner";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import EmptyState from "@/components/ui/EmptyState";
 import MetricCard from "@/components/ui/MetricCard";
 
 import { apiFetch } from "@/lib/api";
@@ -19,6 +22,15 @@ type DatasetRow = {
   created_at?: string;
 };
 
+type DataSourceTab = "demo" | "csv" | "parquet" | "symbol";
+
+const TABS: { id: DataSourceTab; label: string; description: string }[] = [
+  { id: "demo", label: "Demo dataset", description: "Easy onboarding" },
+  { id: "csv", label: "CSV upload", description: "Custom user files" },
+  { id: "parquet", label: "Parquet upload", description: "Quant/data engineering" },
+  { id: "symbol", label: "Symbol fetch", description: "Real product workflow" },
+];
+
 function toArray<T = unknown>(value: unknown): T[] {
   return Array.isArray(value) ? (value as T[]) : [];
 }
@@ -28,21 +40,20 @@ export default function DataPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<DataSourceTab>("demo");
 
-  const CsvUploadFormAny = CsvUploadForm as any;
-  const ErrorBannerAny = ErrorBanner as any;
-  const LoadingSpinnerAny = LoadingSpinner as any;
-  const EmptyStateAny = EmptyState as any;
-  const MetricCardAny = MetricCard as any;
+  const CsvUploadFormAny = CsvUploadForm as React.ComponentType<any>;
+  const ErrorBannerAny = ErrorBanner as React.ComponentType<any>;
+  const LoadingSpinnerAny = LoadingSpinner as React.ComponentType<any>;
+  const EmptyStateAny = EmptyState as React.ComponentType<any>;
+  const MetricCardAny = MetricCard as React.ComponentType<any>;
 
   async function loadDatasets(showSpinner = true) {
     if (showSpinner) setLoading(true);
     else setRefreshing(true);
-
     setError(null);
 
     try {
-      // Try a couple common endpoints
       let res: unknown;
       try {
         res = await apiFetch("/quant/data");
@@ -51,7 +62,6 @@ export default function DataPage() {
       }
 
       const rows = toArray<Record<string, unknown>>(res);
-
       const normalized = rows.map((d, idx) => ({
         id: (d.id as number | string) ?? idx,
         name: String(d.name ?? d.file_name ?? d.filename ?? `Dataset ${idx + 1}`),
@@ -60,7 +70,6 @@ export default function DataPage() {
         row_count: Number(d.row_count ?? d.rows ?? d.num_rows ?? 0),
         created_at: d.created_at ? String(d.created_at) : "",
       }));
-
       setDatasets(normalized);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load datasets.");
@@ -74,7 +83,7 @@ export default function DataPage() {
     loadDatasets(true);
   }, []);
 
-  const onUploadSuccess = async () => {
+  const onDataSuccess = async () => {
     await loadDatasets(false);
   };
 
@@ -82,16 +91,17 @@ export default function DataPage() {
 
   return (
     <div className="space-y-6">
-      {error ? <ErrorBannerAny title="Market Data Error" message={error} error={error} /> : null}
+      {error ? (
+        <ErrorBannerAny title="Market Data Error" message={error} error={error} />
+      ) : null}
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Market Data</h1>
           <p className="text-sm text-slate-400">
-            Upload CSV price data for backtesting and strategy evaluation.
+            Add OHLCV data for backtesting: demo, CSV, Parquet, or fetch from API.
           </p>
         </div>
-
         <button
           onClick={() => loadDatasets(false)}
           className="inline-flex items-center rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm hover:bg-slate-800"
@@ -101,8 +111,8 @@ export default function DataPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <MetricCardAny title="Datasets" value={String(datasets.length)} subtitle="Uploaded files" />
-        <MetricCardAny title="Total Rows" value={String(totalRows)} subtitle="Price bars loaded" />
+        <MetricCardAny title="Datasets" value={String(datasets.length)} subtitle="Loaded" />
+        <MetricCardAny title="Total Rows" value={String(totalRows)} subtitle="Price bars" />
         <MetricCardAny
           title="Symbols"
           value={String(new Set(datasets.map((d) => d.symbol).filter(Boolean)).size)}
@@ -111,25 +121,53 @@ export default function DataPage() {
       </div>
 
       <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
-        <h2 className="mb-3 text-sm font-medium text-slate-200">Upload CSV</h2>
+        <div className="mb-4 flex flex-wrap gap-2 border-b border-slate-800 pb-3">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                activeTab === tab.id
+                  ? "bg-slate-700 text-slate-100"
+                  : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-        <CsvUploadFormAny
-          onUploaded={onUploadSuccess}
-          onUploadedAction={onUploadSuccess}
-          onSuccess={onUploadSuccess}
-          onSuccessAction={onUploadSuccess}
-        />
+        <h2 className="mb-3 text-sm font-medium text-slate-200">
+          {TABS.find((t) => t.id === activeTab)?.description}
+        </h2>
+
+        {activeTab === "demo" && (
+          <DemoDataForm onSuccess={onDataSuccess} />
+        )}
+        {activeTab === "csv" && (
+          <CsvUploadFormAny
+            onUploaded={onDataSuccess}
+            onUploadedAction={onDataSuccess}
+            onSuccess={onDataSuccess}
+            onSuccessAction={onDataSuccess}
+          />
+        )}
+        {activeTab === "parquet" && (
+          <ParquetUploadForm onSuccess={onDataSuccess} />
+        )}
+        {activeTab === "symbol" && (
+          <SymbolFetchForm onSuccess={onDataSuccess} />
+        )}
       </div>
 
       <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
         <h2 className="mb-3 text-sm font-medium text-slate-200">Available Datasets</h2>
-
         {loading ? (
           <LoadingSpinnerAny label="Loading datasets..." />
         ) : datasets.length === 0 ? (
           <EmptyStateAny
             title="No market data yet"
-            description="Upload a CSV file to begin running backtests."
+            description="Load demo data, upload a file, or fetch a symbol to get started."
           />
         ) : (
           <div className="overflow-x-auto">

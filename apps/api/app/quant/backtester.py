@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import asdict
 from typing import Any
 
 from .metrics import compute_metrics
@@ -35,7 +36,7 @@ def run_backtest(
         return BacktestResult(
             symbol=config.symbol,
             timeframe=config.timeframe,
-            config=config.__dict__.copy(),
+            config=asdict(config),
             metrics={},
             trades=[],
             equity_curve=[],
@@ -134,7 +135,7 @@ def run_backtest(
     return BacktestResult(
         symbol=config.symbol,
         timeframe=config.timeframe,
-        config=config.__dict__.copy(),
+        config=asdict(config),
         metrics=metrics,
         trades=trades,
         equity_curve=equity_curve,

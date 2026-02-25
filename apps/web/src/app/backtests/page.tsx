@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 
 import BacktestRunsTable from "@/components/tables/BacktestRunsTable";
 import TradesTable from "@/components/tables/TradesTable";
@@ -44,7 +45,16 @@ type Trade = {
 };
 
 function toArray<T = unknown>(value: unknown): T[] {
-  return Array.isArray(value) ? (value as T[]) : [];
+  if (Array.isArray(value)) return value as T[];
+  if (value && typeof value === "object" && "strategies" in value) {
+    const s = (value as Record<string, unknown>).strategies;
+    return Array.isArray(s) ? (s as T[]) : [];
+  }
+  if (value && typeof value === "object" && "data" in value) {
+    const d = (value as Record<string, unknown>).data;
+    return Array.isArray(d) ? (d as T[]) : [];
+  }
+  return [];
 }
 
 function toNum(v: unknown, d = 0) {
@@ -179,25 +189,16 @@ export default function BacktestsPage() {
 
     const payload = {
       strategy_id: Number(form.strategy_id),
-      symbol: form.symbol,
-      timeframe: form.timeframe,
-      initial_cash: Number(form.initial_cash),
-      commission_bps: Number(form.commission_bps),
+      initial_capital: Number(form.initial_cash),
+      fees_bps: Number(form.commission_bps),
+      slippage_bps: 1,
     };
 
     try {
-      // Support either endpoint shape depending on your backend implementation
-      try {
-        await apiFetch("/quant/backtests/run", {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
-      } catch {
-        await apiFetch("/quant/backtests", {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
-      }
+      await apiFetch("/quant/backtests/run", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
 
       await loadPage();
     } catch (e) {
@@ -253,13 +254,25 @@ export default function BacktestsPage() {
               onChange={(e) => setForm((p) => ({ ...p, strategy_id: e.target.value }))}
               required
             >
-              <option value="">Select strategy</option>
+              <option value="">
+                {strategies.length === 0
+                  ? "No strategies—create one first"
+                  : "Select strategy"}
+              </option>
               {strategies.map((s) => (
                 <option key={String(s.id)} value={String(s.id)}>
                   {s.name}
                 </option>
               ))}
             </select>
+            {strategies.length === 0 && (
+              <p className="mt-1 text-xs text-slate-500">
+                <Link href="/strategies" className="text-blue-400 hover:underline">
+                  Create a strategy
+                </Link>{" "}
+                on the Strategies page to run backtests.
+              </p>
+            )}
           </div>
 
           <div>
@@ -313,10 +326,10 @@ export default function BacktestsPage() {
           <div className="md:col-span-6">
             <button
               type="submit"
-              disabled={running}
+              disabled={running || strategies.length === 0}
               className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-60"
             >
-              {running ? "Running backtest..." : "Run Backtest"}
+              {running ? "Running backtest..." : strategies.length === 0 ? "Create a strategy first" : "Run Backtest"}
             </button>
           </div>
         </form>
