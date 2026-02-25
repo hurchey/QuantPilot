@@ -7,5 +7,7 @@ python-jose[cryptography]==3.4.0
 passlib==1.7.4
 python-dotenv==1.1.1
 pyarrow>=14.0.0
+requests>=2.31.0
 yfinance>=0.2.0
+py_vollib>=1.0.1
 pandas>=2.0.0

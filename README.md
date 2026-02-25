@@ -5,7 +5,8 @@ A quant-focused full-stack SaaS app for uploading market data, defining trading 
 ## What You'll See
 
 - **Home** — Overview and quick links to the main workflow (Create Account → Upload Data → Build Strategy → Run Backtest)
-- **Market Data** — Import OHLCV data via demo datasets, CSV upload, Parquet upload, or symbol fetch from an API
+- **Market Data** — Import OHLCV data via demo datasets, CSV upload, Parquet upload, or symbol fetch from Yahoo Finance
+- **Stock Profile** — Deep-dive into a single stock: current/previous price, 52-week and all-time highs/lows, volume, beta, P/E, and options Greeks (delta, gamma, theta, vega)
 - **Strategies** — Define SMA crossover parameters and other strategy configurations
 - **Backtests** — Run backtests and view results
 - **Dashboard** — Equity curves, drawdown charts, trade tables, and metrics (PnL, Sharpe ratio, win rate, max drawdown)

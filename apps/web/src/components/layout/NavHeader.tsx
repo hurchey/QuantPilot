@@ -32,6 +32,9 @@ export default function NavHeader() {
           <Link href="/backtests" className="hover:text-white text-slate-300">
             Backtests
           </Link>
+          <Link href="/stocks" className="hover:text-white text-slate-300">
+            Stock Profile
+          </Link>
 
           {loading ? (
             <span className="text-slate-500">...</span>

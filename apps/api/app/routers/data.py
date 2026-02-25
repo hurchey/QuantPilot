@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from ..deps import get_current_workspace, get_db
 from ..models import MarketBar
+from ..services import alphavantage as av
 
 router = APIRouter(prefix="/data", tags=["data"])
 datasets_router = APIRouter(prefix="/datasets", tags=["data"])
@@ -406,10 +407,13 @@ def fetch_symbol_data(
     db: Session = Depends(get_db),
     workspace=Depends(get_current_workspace),
 ) -> dict[str, Any]:
-    """Fetch symbol from market data API (yfinance). Real product workflow."""
+    """Fetch symbol from market data API. Supports yfinance (default) and Alpha Vantage."""
     symbol = str(body.get("symbol", "")).strip().upper()
     if not symbol:
         raise HTTPException(status_code=400, detail="symbol is required")
+    source = str(body.get("source", "yfinance")).strip().lower()
+    if source not in ("yfinance", "alphavantage"):
+        raise HTTPException(status_code=400, detail="source must be yfinance or alphavantage")
     timeframe = str(body.get("timeframe", "1d")).strip()
     end = datetime.now(timezone.utc)
     start = end - timedelta(days=int(body.get("days", 365)))
@@ -418,43 +422,98 @@ def fetch_symbol_data(
     if "end_date" in body:
         end = _parse_timestamp(str(body["end_date"]))
 
-    try:
-        df = yf.download(
-            symbol,
-            start=start.date(),
-            end=end.date(),
-            interval=timeframe,
-            progress=False,
-            auto_adjust=True,
-        )
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Fetch failed: {e}") from e
+    if source == "alphavantage":
+        # Alpha Vantage only provides daily data
+        timeframe = "1d"
+        outputsize = "full" if (end - start).days > 100 else "compact"
+        try:
+            bars = av.get_time_series_daily(symbol, outputsize=outputsize)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
+        start_naive = start.replace(tzinfo=None)
+        end_naive = end.replace(tzinfo=None)
+        df = None
+        rows_for_insert = []
+        for b in bars:
+            try:
+                ts = datetime.strptime(b["date"], "%Y-%m-%d").replace(tzinfo=None)
+            except (ValueError, KeyError):
+                continue
+            if start_naive <= ts <= end_naive:
+                rows_for_insert.append({
+                    "timestamp": ts,
+                    "open": b.get("open") or 0.0,
+                    "high": b.get("high") or 0.0,
+                    "low": b.get("low") or 0.0,
+                    "close": b.get("close") or 0.0,
+                    "volume": float(b.get("volume") or 0),
+                })
+        if not rows_for_insert:
+            return {
+                "message": "No data returned for symbol",
+                "symbol": symbol,
+                "timeframe": timeframe,
+                "source": source,
+                "rows_inserted": 0,
+            }
+        # Build a minimal df-like structure for the insert loop below
+        class _Row:
+            def __init__(self, d):
+                self._d = d
+            def __getitem__(self, k):
+                return self._d.get(k)
+            def get(self, k, default=None):
+                return self._d.get(k, default)
 
-    if df is None or df.empty:
-        return {
-            "message": "No data returned for symbol",
-            "symbol": symbol,
-            "timeframe": timeframe,
-            "rows_inserted": 0,
-        }
+        class _DfLike:
+            def __init__(self, rows):
+                self._rows = rows
+                self.columns = ["timestamp", "open", "high", "low", "close", "volume"]
+            def iterrows(self):
+                for i, r in enumerate(self._rows):
+                    yield i, _Row(r)
+        df = _DfLike(rows_for_insert)
+        col_map = {"timestamp": "timestamp", "open": "open", "high": "high", "low": "low", "close": "close", "volume": "volume"}
+    else:
+        try:
+            df = yf.download(
+                symbol,
+                start=start.date(),
+                end=end.date(),
+                interval=timeframe,
+                progress=False,
+                auto_adjust=True,
+            )
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Fetch failed: {e}") from e
 
-    df = df.reset_index()
-    col_map: dict[str, Any] = {}
-    for c in df.columns:
-        c_str = c[0] if isinstance(c, tuple) else str(c)
-        c_lower = c_str.lower()
-        if c_lower in ("date", "datetime", "timestamp"):
-            col_map["timestamp"] = c
-        elif c_lower == "open":
-            col_map["open"] = c
-        elif c_lower == "high":
-            col_map["high"] = c
-        elif c_lower == "low":
-            col_map["low"] = c
-        elif c_lower == "close":
-            col_map["close"] = c
-        elif c_lower == "volume":
-            col_map["volume"] = c
+        if df is None or df.empty:
+            return {
+                "message": "No data returned for symbol",
+                "symbol": symbol,
+                "timeframe": timeframe,
+                "source": source,
+                "rows_inserted": 0,
+            }
+
+        df = df.reset_index()
+        col_map = {}
+        for c in df.columns:
+            c_str = c[0] if isinstance(c, tuple) else str(c)
+            c_lower = c_str.lower()
+            if c_lower in ("date", "datetime", "timestamp"):
+                col_map["timestamp"] = c
+            elif c_lower == "open":
+                col_map["open"] = c
+            elif c_lower == "high":
+                col_map["high"] = c
+            elif c_lower == "low":
+                col_map["low"] = c
+            elif c_lower == "close":
+                col_map["close"] = c
+            elif c_lower == "volume":
+                col_map["volume"] = c
+
     missing = {"timestamp", "open", "high", "low", "close", "volume"} - set(col_map)
     if missing:
         raise HTTPException(

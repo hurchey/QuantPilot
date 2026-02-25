@@ -10,6 +10,7 @@ export const ROUTES = {
   strategies: "/strategies",
   data: "/data",
   backtests: "/backtests",
+  stocks: "/stocks",
 } as const;
 
 export const API_CONFIG = {

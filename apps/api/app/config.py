@@ -35,6 +35,9 @@ class Settings:
     # Frontend / CORS
     frontend_url: str = os.getenv("FRONTEND_URL", "http://localhost:3000").strip()
 
+    # Alpha Vantage (stock data API)
+    alphavantage_api_key: str = os.getenv("ALPHAVANTAGE_API_KEY", "").strip()
+
     # Cookie settings
     auth_cookie_name: str = os.getenv("AUTH_COOKIE_NAME", "access_token")
     cookie_secure: bool = _get_bool("COOKIE_SECURE", False)  # False for localhost
