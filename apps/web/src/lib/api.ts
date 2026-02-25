@@ -1,158 +1,95 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+// src/lib/api.ts
+const DEFAULT_API_BASE_URL = "http://localhost:3000";
 
-if (!API_URL) {
-  throw new Error("NEXT_PUBLIC_API_URL is not set");
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") || DEFAULT_API_BASE_URL;
+
+const TOKEN_KEY = "qp_access_token";
+
+export function getAuthToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(TOKEN_KEY);
 }
 
-type QueryValue = string | number | boolean | null | undefined;
-type QueryParams = Record<string, QueryValue>;
-
-export class ApiError extends Error {
-  status: number;
-  data: unknown;
-
-  constructor(message: string, status: number, data: unknown) {
-    super(message);
-    this.name = "ApiError";
-    this.status = status;
-    this.data = data;
-  }
+export function setAuthToken(token: string): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(TOKEN_KEY, token);
 }
 
-type ApiOptions = Omit<RequestInit, "headers"> & {
-  headers?: HeadersInit;
-  query?: QueryParams;
+export function clearAuthToken(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(TOKEN_KEY);
+}
+
+function buildUrl(path: string): string {
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${API_BASE_URL}${normalizedPath}`;
+}
+
+type ApiFetchOptions = RequestInit & {
+  skipAuth?: boolean;
 };
 
-function buildUrl(path: string, query?: QueryParams): string {
-  const url = new URL(path, API_URL);
+export async function apiFetch<T = unknown>(
+  path: string,
+  options: ApiFetchOptions = {}
+): Promise<T> {
+  const { skipAuth = false, headers, body, ...rest } = options;
 
-  if (query) {
-    for (const [key, value] of Object.entries(query)) {
-      if (value === null || value === undefined) continue;
-      url.searchParams.set(key, String(value));
+  const mergedHeaders = new Headers(headers || {});
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+
+  if (!skipAuth) {
+    const token = getAuthToken();
+    if (token) {
+      mergedHeaders.set("Authorization", `Bearer ${token}`);
     }
   }
 
-  return url.toString();
-}
-
-function getErrorMessage(data: unknown, fallback = "Request failed"): string {
-  if (!data) return fallback;
-
-  if (typeof data === "string") return data;
-
-  if (typeof data === "object" && data !== null) {
-    // FastAPI commonly returns { detail: "..." } or { detail: [...] }
-    const maybeDetail = (data as { detail?: unknown }).detail;
-
-    if (typeof maybeDetail === "string") return maybeDetail;
-
-    if (Array.isArray(maybeDetail)) {
-      // Validation errors can be arrays; stringify a readable version
-      return maybeDetail
-        .map((item) => {
-          if (typeof item === "string") return item;
-          if (typeof item === "object" && item !== null) {
-            const msg = (item as { msg?: unknown }).msg;
-            return typeof msg === "string" ? msg : JSON.stringify(item);
-          }
-          return String(item);
-        })
-        .join(", ");
-    }
+  if (!isFormData && body && !mergedHeaders.has("Content-Type")) {
+    mergedHeaders.set("Content-Type", "application/json");
   }
 
-  return fallback;
-}
-
-export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promise<T> {
-  const { query, headers: incomingHeaders, ...rest } = options;
-
-  const headers = new Headers(incomingHeaders);
-
-  // Set defaults
-  if (!headers.has("Accept")) {
-    headers.set("Accept", "application/json");
-  }
-
-  const hasBody = rest.body !== undefined;
-  const isFormData = typeof FormData !== "undefined" && rest.body instanceof FormData;
-
-  // Only set JSON content type when appropriate
-  if (hasBody && !isFormData && !headers.has("Content-Type")) {
-    headers.set("Content-Type", "application/json");
-  }
-
-  const res = await fetch(buildUrl(path, query), {
+  const response = await fetch(buildUrl(path), {
     ...rest,
-    headers,
-    credentials: "include", // important for HttpOnly cookie auth
+    headers: mergedHeaders,
+    body,
   });
 
-  // Handle empty responses (e.g. 204)
-  if (res.status === 204) {
-    return undefined as T;
-  }
-
-  const contentType = res.headers.get("content-type") || "";
+  const contentType = response.headers.get("content-type") || "";
   const isJson = contentType.includes("application/json");
 
-  let data: unknown;
-  try {
-    data = isJson ? await res.json() : await res.text();
-  } catch {
-    data = null;
+  const payload = isJson ? await response.json().catch(() => null) : await response.text().catch(() => "");
+
+  if (!response.ok) {
+    const message =
+      (payload &&
+        typeof payload === "object" &&
+        ("detail" in payload ? String((payload as any).detail) : "")) ||
+      (typeof payload === "string" ? payload : "") ||
+      `Request failed with status ${response.status}`;
+    throw new Error(message);
   }
 
-  if (!res.ok) {
-    throw new ApiError(getErrorMessage(data), res.status, data);
-  }
-
-  return data as T;
+  return payload as T;
 }
 
-// Optional convenience wrappers
-export const api = {
-  get: <T>(path: string, query?: QueryParams, options?: Omit<ApiOptions, "query" | "method">) =>
-    apiFetch<T>(path, { ...options, method: "GET", query }),
+// Optional convenience helpers
+export function apiGet<T = unknown>(path: string, options: ApiFetchOptions = {}) {
+  return apiFetch<T>(path, { ...options, method: "GET" });
+}
 
-  post: <T>(
-    path: string,
-    body?: unknown,
-    options?: Omit<ApiOptions, "body" | "method">
-  ) =>
-    apiFetch<T>(path, {
-      ...options,
-      method: "POST",
-      body:
-        body instanceof FormData || typeof body === "string" ? body : body !== undefined ? JSON.stringify(body) : undefined,
-    }),
+export function apiPost<T = unknown>(
+  path: string,
+  data?: unknown,
+  options: ApiFetchOptions = {}
+) {
+  const body =
+    data instanceof FormData ? data : data !== undefined ? JSON.stringify(data) : undefined;
+  return apiFetch<T>(path, { ...options, method: "POST", body });
+}
 
-  patch: <T>(
-    path: string,
-    body?: unknown,
-    options?: Omit<ApiOptions, "body" | "method">
-  ) =>
-    apiFetch<T>(path, {
-      ...options,
-      method: "PATCH",
-      body:
-        body instanceof FormData || typeof body === "string" ? body : body !== undefined ? JSON.stringify(body) : undefined,
-    }),
-
-  put: <T>(
-    path: string,
-    body?: unknown,
-    options?: Omit<ApiOptions, "body" | "method">
-  ) =>
-    apiFetch<T>(path, {
-      ...options,
-      method: "PUT",
-      body:
-        body instanceof FormData || typeof body === "string" ? body : body !== undefined ? JSON.stringify(body) : undefined,
-    }),
-
-  delete: <T>(path: string, options?: Omit<ApiOptions, "method">) =>
-    apiFetch<T>(path, { ...options, method: "DELETE" }),
-};
+export function apiDelete<T = unknown>(path: string, options: ApiFetchOptions = {}) {
+  return apiFetch<T>(path, { ...options, method: "DELETE" });
+}

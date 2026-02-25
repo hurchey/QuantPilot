@@ -21,6 +21,8 @@ def _build_allowed_origins(frontend_url: str) -> list[str]:
     # Common local ports if you switch around
     origins.update(
         {
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
             "http://localhost:8000",
             "http://127.0.0.1:8000",
             "http://localhost:8001",
@@ -54,7 +56,8 @@ app.add_middleware(
 # Routers
 app.include_router(health.router)
 app.include_router(auth.router)
-app.include_router(strategies.router)
-app.include_router(data.router)
-app.include_router(backtests.router)
-app.include_router(dashboard.router)
+app.include_router(strategies.router, prefix="/quant")
+app.include_router(data.router, prefix="/quant")
+app.include_router(data.datasets_router, prefix="/quant")
+app.include_router(backtests.router, prefix="/quant")
+app.include_router(dashboard.router, prefix="/quant")

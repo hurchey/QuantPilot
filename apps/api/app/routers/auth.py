@@ -88,6 +88,8 @@ def register(
     _set_auth_cookie(response, token)
 
     return {
+        "access_token": token,
+        "token_type": "bearer",
         "message": "Registered successfully",
         "user": {
             "id": user.id,
@@ -114,6 +116,8 @@ def login(
     _set_auth_cookie(response, token)
 
     return {
+        "access_token": token,
+        "token_type": "bearer",
         "message": "Logged in successfully",
         "user": {
             "id": user.id,

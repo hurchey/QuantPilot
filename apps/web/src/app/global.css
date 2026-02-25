@@ -1,128 +1,285 @@
+/* apps/web/src/app/globals.css */
+@import "tailwindcss";
+
+:root {
+  --bg: #020617;
+  --bg-soft: #0b1220;
+  --panel: #0f172a;
+  --panel-2: #111827;
+  --border: #1e293b;
+  --border-strong: #334155;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+
+  --green: #22c55e;
+  --red: #ef4444;
+  --blue: #3b82f6;
+  --amber: #f59e0b;
+}
+
 * {
-    box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 15% -10%, rgba(59, 130, 246, 0.10), transparent 40%),
+    radial-gradient(circle at 95% 10%, rgba(34, 197, 94, 0.08), transparent 35%),
+    linear-gradient(to bottom, #020617, #030712);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+/* ---- App layout helpers ---- */
+
+.qp-shell {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.qp-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.qp-page-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.qp-page-subtitle {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.qp-grid-2 {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 1024px) {
+  .qp-grid-2 {
+    grid-template-columns: 1fr 1fr;
   }
-  
-  html, body {
-    margin: 0;
-    padding: 0;
-    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: #f7f8fb;
-    color: #111827;
+}
+
+.qp-metrics-grid {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+@media (min-width: 640px) {
+  .qp-metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  
-  a {
-    color: inherit;
-    text-decoration: none;
+}
+
+@media (min-width: 1024px) {
+  .qp-metrics-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  
-  .container {
-    max-width: 920px;
-    margin: 0 auto;
-    padding: 24px;
-  }
-  
-  .card {
-    background: white;
-    border: 1px solid #e5e7eb;
-    border-radius: 14px;
-    padding: 16px;
-  }
-  
-  .row {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-  }
-  
-  .grid {
-    display: grid;
-    gap: 12px;
-  }
-  
-  .input, .select, .button {
-    border-radius: 10px;
-    border: 1px solid #d1d5db;
-    padding: 10px 12px;
-    font-size: 14px;
-  }
-  
-  .input, .select {
-    width: 100%;
-    background: #fff;
-  }
-  
-  .button {
-    background: #111827;
-    color: white;
-    cursor: pointer;
-    border: none;
-  }
-  
-  .button.secondary {
-    background: white;
-    color: #111827;
-    border: 1px solid #d1d5db;
-  }
-  
-  .button.danger {
-    background: #dc2626;
-  }
-  
-  .button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-  
-  .muted {
-    color: #6b7280;
-  }
-  
-  .title {
-    font-size: 28px;
-    font-weight: 700;
-    margin: 0;
-  }
-  
-  .subtitle {
-    font-size: 14px;
-    margin: 4px 0 0;
-    color: #6b7280;
-  }
-  
-  .task-item {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 12px;
-    align-items: start;
-  }
-  
-  .badge {
-    display: inline-flex;
-    padding: 4px 8px;
-    border-radius: 999px;
-    font-size: 12px;
-    border: 1px solid #e5e7eb;
-    background: #f9fafb;
-  }
-  
-  .badges {
-    display: flex;
-    gap: 8px;
-    margin-top: 8px;
-  }
-  
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-  }
-  
-  @media (max-width: 768px) {
-    .stats-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  
-    .task-item {
-      grid-template-columns: 1fr;
-    }
-  }
+}
+
+/* ---- Panels ---- */
+
+.qp-panel {
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.95), rgba(2, 6, 23, 0.95));
+  border-radius: 16px;
+  padding: 0.9rem;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.02) inset,
+    0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.qp-panel-centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+  flex-direction: column;
+}
+
+.qp-panel-header {
+  margin-bottom: 0.75rem;
+}
+
+.qp-panel-header h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.qp-panel-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+/* ---- Buttons / badges ---- */
+
+.qp-btn {
+  border: 1px solid var(--border-strong);
+  background: #111827;
+  color: var(--text);
+  border-radius: 10px;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 120ms ease;
+}
+
+.qp-btn:hover {
+  border-color: #475569;
+  background: #1f2937;
+}
+
+.qp-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.qp-btn-primary {
+  border-color: rgba(59, 130, 246, 0.45);
+  background: linear-gradient(180deg, rgba(30, 64, 175, 0.35), rgba(30, 41, 59, 0.65));
+}
+
+.qp-btn-primary:hover {
+  border-color: rgba(59, 130, 246, 0.75);
+}
+
+.qp-badge {
+  border: 1px solid var(--border-strong);
+  background: rgba(148, 163, 184, 0.06);
+  color: #cbd5e1;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.55rem;
+  white-space: nowrap;
+}
+
+/* ---- Shared text helpers ---- */
+
+.qp-muted {
+  color: var(--muted);
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+/* ---- Form defaults (for CsvUploadForm + StrategyForm) ---- */
+
+input,
+select,
+textarea {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(15, 23, 42, 0.9);
+  color: var(--text);
+  padding: 0.6rem 0.75rem;
+  outline: none;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: rgba(59, 130, 246, 0.65);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+/* ---- Table defaults (for BacktestRunsTable + TradesTable) ---- */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead th {
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  padding: 0.55rem 0.6rem;
+}
+
+tbody td {
+  border-bottom: 1px solid rgba(30, 41, 59, 0.7);
+  padding: 0.6rem;
+  font-size: 0.85rem;
+}
+
+tbody tr:hover {
+  background: rgba(148, 163, 184, 0.03);
+}
+
+/* ---- Chart container polish ---- */
+.recharts-wrapper {
+  font-size: 12px;
+}
+
+.recharts-cartesian-grid line {
+  stroke: rgba(148, 163, 184, 0.12);
+}
+
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: #020617 !important;
+  border: 1px solid #334155 !important;
+  border-radius: 10px !important;
+  color: #e2e8f0 !important;
+}
+
+/* ---- Scrollbars ---- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #334155 transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}

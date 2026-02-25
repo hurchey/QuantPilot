@@ -33,7 +33,7 @@ class Settings:
     access_token_exp_minutes: int = int(os.getenv("ACCESS_TOKEN_EXP_MINUTES", "10080"))  # 7 days
 
     # Frontend / CORS
-    frontend_url: str = os.getenv("FRONTEND_URL", "http://localhost:8000").strip()
+    frontend_url: str = os.getenv("FRONTEND_URL", "http://localhost:3000").strip()
 
     # Cookie settings
     auth_cookie_name: str = os.getenv("AUTH_COOKIE_NAME", "access_token")

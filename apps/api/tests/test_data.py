@@ -8,7 +8,7 @@ def test_upload_list_symbols_and_bars(auth_client: TestClient):
     csv_bytes = make_csv_rows(40)
 
     upload = auth_client.post(
-        "/data/upload",
+        "/quant/data/upload",
         data={"symbol": "AAPL", "timeframe": "1d"},
         files={"file": ("aapl.csv", csv_bytes, "text/csv")},
     )
@@ -19,7 +19,7 @@ def test_upload_list_symbols_and_bars(auth_client: TestClient):
 
     # Re-upload same file -> duplicates skipped
     upload2 = auth_client.post(
-        "/data/upload",
+        "/quant/data/upload",
         data={"symbol": "AAPL", "timeframe": "1d"},
         files={"file": ("aapl.csv", csv_bytes, "text/csv")},
     )
@@ -28,11 +28,11 @@ def test_upload_list_symbols_and_bars(auth_client: TestClient):
     assert payload2["rows_inserted"] == 0
     assert payload2["rows_skipped_duplicates"] == 40
 
-    symbols = auth_client.get("/data/symbols")
+    symbols = auth_client.get("/quant/data/symbols")
     assert symbols.status_code == 200, symbols.text
     assert {"symbol": "AAPL", "timeframe": "1d"} in symbols.json()
 
-    bars = auth_client.get("/data/bars", params={"symbol": "AAPL", "timeframe": "1d", "limit": 10})
+    bars = auth_client.get("/quant/data/bars", params={"symbol": "AAPL", "timeframe": "1d", "limit": 10})
     assert bars.status_code == 200, bars.text
     rows = bars.json()
     assert len(rows) == 10

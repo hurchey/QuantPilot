@@ -5,6 +5,8 @@ import io
 from datetime import datetime, timezone
 from typing import Any
 
+from sqlalchemy import func
+
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from sqlalchemy.orm import Session
 
@@ -12,6 +14,7 @@ from ..deps import get_current_workspace, get_db
 from ..models import MarketBar
 
 router = APIRouter(prefix="/data", tags=["data"])
+datasets_router = APIRouter(prefix="/datasets", tags=["data"])
 
 
 REQUIRED_CSV_COLUMNS = {"timestamp", "open", "high", "low", "close", "volume"}
@@ -43,6 +46,50 @@ def _parse_timestamp(value: str) -> datetime:
             continue
 
     raise ValueError(f"Invalid timestamp format: {value}")
+
+
+def _list_datasets_impl(db: Session, workspace: Any) -> list[dict[str, Any]]:
+    rows = (
+        db.query(
+            MarketBar.symbol,
+            MarketBar.timeframe,
+            func.count(MarketBar.id).label("row_count"),
+            func.min(MarketBar.timestamp).label("created_at"),
+        )
+        .filter(MarketBar.workspace_id == workspace.id)
+        .group_by(MarketBar.symbol, MarketBar.timeframe)
+        .order_by(MarketBar.symbol.asc(), MarketBar.timeframe.asc())
+        .all()
+    )
+    return [
+        {
+            "id": idx,
+            "name": f"{r.symbol} {r.timeframe}",
+            "symbol": r.symbol,
+            "timeframe": r.timeframe,
+            "row_count": r.row_count,
+            "created_at": r.created_at.isoformat() if r.created_at else None,
+        }
+        for idx, r in enumerate(rows)
+    ]
+
+
+@router.get("")
+def list_datasets(
+    db: Session = Depends(get_db),
+    workspace=Depends(get_current_workspace),
+) -> list[dict[str, Any]]:
+    """List datasets (symbol/timeframe pairs) with row counts. Serves GET /quant/data."""
+    return _list_datasets_impl(db, workspace)
+
+
+@datasets_router.get("")
+def list_datasets_alias(
+    db: Session = Depends(get_db),
+    workspace=Depends(get_current_workspace),
+) -> list[dict[str, Any]]:
+    """List datasets. Serves GET /quant/datasets (frontend fallback)."""
+    return _list_datasets_impl(db, workspace)
 
 
 def _bar_to_dict(row: MarketBar) -> dict[str, Any]:
