@@ -44,11 +44,20 @@ class BacktestConfig:
     initial_capital: float = 10_000.0
     fees_bps: float = 1.0
     slippage_bps: float = 1.0
+    spread_bps: float = 0.0  # bid-ask half-spread
     fixed_qty: float | None = None
     allow_fractional: bool = True
     close_final_position: bool = True
     risk_free_rate: float = 0.0  # annualized, e.g. 0.02 for 2%
     periods_per_year: int = 252  # daily default
+
+    # Realistic execution (quant finance)
+    adv_dollars: float = 0.0  # avg daily volume $ for impact; 0 = no impact
+    impact_coef: float = 0.1  # sqrt impact coefficient
+    borrow_rate_bps: float = 0.0  # short borrow cost
+    max_position_pct_adv: float = 0.1  # max position as % of ADV (liquidity limit)
+    max_leverage: float = 1.0  # 1 = no margin, 2 = 2x
+    execution_delay_bars: int = 0  # bars before order fills (no lookahead)
 
 
 @dataclass(slots=True)

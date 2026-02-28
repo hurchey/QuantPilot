@@ -3,7 +3,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 
-from .costs import apply_slippage, calculate_fee
+from .costs import (
+    apply_market_impact,
+    apply_slippage,
+    apply_spread,
+    calculate_fee,
+    total_execution_price,
+)
 from .types import TradeEvent
 
 
@@ -28,13 +34,17 @@ class PortfolioState:
         qty: float,
         fees_bps: float,
         slippage_bps: float,
+        spread_bps: float = 0.0,
+        impact_bps: float = 0.0,
         reason: str | None = None,
     ) -> TradeEvent | None:
         qty = float(qty)
         if qty <= 0:
             return None
 
-        exec_price = apply_slippage(float(market_price), "buy", slippage_bps)
+        exec_price = total_execution_price(
+            market_price, "buy", slippage_bps, spread_bps, impact_bps
+        )
         notional = exec_price * qty
         fee = calculate_fee(notional, fees_bps)
         total_cost = notional + fee
@@ -84,13 +94,17 @@ class PortfolioState:
         market_price: float,
         fees_bps: float,
         slippage_bps: float,
+        spread_bps: float = 0.0,
+        impact_bps: float = 0.0,
         reason: str | None = None,
     ) -> TradeEvent | None:
         if self.position_qty <= 0:
             return None
 
         qty = self.position_qty
-        exec_price = apply_slippage(float(market_price), "sell", slippage_bps)
+        exec_price = total_execution_price(
+            market_price, "sell", slippage_bps, spread_bps, impact_bps
+        )
         notional = exec_price * qty
         fee = calculate_fee(notional, fees_bps)
 

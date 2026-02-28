@@ -38,6 +38,24 @@ class Settings:
     # Alpha Vantage (stock data API)
     alphavantage_api_key: str = os.getenv("ALPHAVANTAGE_API_KEY", "").strip()
 
+    # Finnhub (news + social sentiment) - https://finnhub.io/register
+    finnhub_api_key: str = os.getenv("FINNHUB_API_KEY", "").strip()
+
+    # Reddit (PRAW) - https://www.reddit.com/prefs/apps
+    reddit_client_id: str = os.getenv("REDDIT_CLIENT_ID", "").strip()
+    reddit_client_secret: str = os.getenv("REDDIT_CLIENT_SECRET", "").strip()
+    reddit_user_agent: str = os.getenv("REDDIT_USER_AGENT", "QuantPilot/1.0").strip()
+
+    # Stocktwits - public API, no key needed for basic use
+    # STOCKTWITS_ACCESS_TOKEN=optional_for_higher_limits
+
+    # Market Data (options chain with reliable bid/ask)
+    # https://www.marketdata.app/ - free tier: 100 req/day, AAPL trial
+    marketdata_api_key: str = os.getenv("MARKETDATA_API_KEY", "").strip()
+
+    # Options quant: default risk-free rate (decimal, e.g. 0.05 for 5%)
+    default_risk_free_rate: float = float(os.getenv("DEFAULT_RISK_FREE_RATE", "0.05"))
+
     # Cookie settings
     auth_cookie_name: str = os.getenv("AUTH_COOKIE_NAME", "access_token")
     cookie_secure: bool = _get_bool("COOKIE_SECURE", False)  # False for localhost

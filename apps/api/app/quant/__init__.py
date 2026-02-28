@@ -5,6 +5,7 @@ from .backtester import run_backtest, run_sma_crossover_backtest
 from .metrics import compute_metrics
 from .serializers import (
     trade_to_dict,
+    trade_event_from_db_row,
     equity_point_to_dict,
     result_to_json_payload,
     build_db_rows_for_result,
@@ -22,6 +23,7 @@ __all__ = [
     "run_sma_crossover_backtest",
     "compute_metrics",
     "trade_to_dict",
+    "trade_event_from_db_row",
     "equity_point_to_dict",
     "result_to_json_payload",
     "build_db_rows_for_result",

@@ -6,6 +6,22 @@ from typing import Any
 from .types import BacktestResult, EquityPoint, TradeEvent
 
 
+def trade_event_from_db_row(
+    row: Any,
+) -> TradeEvent:
+    """Convert DB Trade row to TradeEvent."""
+    return TradeEvent(
+        timestamp=row.timestamp,
+        symbol=row.symbol,
+        side=row.side,
+        qty=float(row.qty),
+        price=float(row.price),
+        fee=float(row.fee or 0),
+        realized_pnl=float(row.realized_pnl) if row.realized_pnl is not None else None,
+        reason=None,
+    )
+
+
 def _json_safe_value(value: Any) -> Any:
     if isinstance(value, float):
         if math.isnan(value) or math.isinf(value):

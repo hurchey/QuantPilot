@@ -23,6 +23,9 @@ export default function NavHeader() {
           <Link href="/dashboard" className="hover:text-white text-slate-300">
             Dashboard
           </Link>
+          <Link href="/workflow" className="hover:text-white text-slate-300">
+            Workflow
+          </Link>
           <Link href="/strategies" className="hover:text-white text-slate-300">
             Strategies
           </Link>
@@ -31,6 +34,9 @@ export default function NavHeader() {
           </Link>
           <Link href="/backtests" className="hover:text-white text-slate-300">
             Backtests
+          </Link>
+          <Link href="/backtest-pipeline" className="hover:text-white text-slate-300">
+            Pipeline
           </Link>
           <Link href="/stocks" className="hover:text-white text-slate-300">
             Stock Profile

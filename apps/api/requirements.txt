@@ -11,3 +11,7 @@ requests>=2.31.0
 yfinance>=0.2.0
 py_vollib>=1.0.1
 pandas>=2.0.0
+vaderSentiment>=3.3.2
+# pytrends>=5.0.0  # Optional: Google Trends. Uncomment for search volume in sentiment.
+# transformers>=4.30.0  # Optional: FinBERT. Uncomment for ensemble NLP.
+# torch>=2.0.0  # Optional: Required for FinBERT.

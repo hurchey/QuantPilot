@@ -12,6 +12,9 @@ type Trade = {
   price?: number | string;
   pnl?: number | string;
   pnl_amount?: number | string;
+  price_return_pct?: number | string;
+  return_pct?: number | string;
+  returnPct?: number | string;
   opened_at?: string;
   closed_at?: string;
   entry_time?: string;
@@ -62,9 +65,10 @@ export default function TradesTable({
             <th>Symbol</th>
             <th>Side</th>
             <th>Qty</th>
-            <th>Entry</th>
-            <th>Exit</th>
+            <th>Entry Price</th>
+            <th>Exit Price</th>
             <th>PnL</th>
+            <th>Return %</th>
             <th>Opened</th>
             <th>Closed</th>
           </tr>
@@ -75,6 +79,7 @@ export default function TradesTable({
             const entry = trade.entry_price ?? trade.price;
             const exit = trade.exit_price;
             const pnl = trade.pnl ?? trade.pnl_amount;
+            const returnPct = trade.price_return_pct ?? trade.return_pct ?? trade.returnPct;
             const side = String(trade.side ?? "-").toUpperCase();
 
             return (
@@ -94,18 +99,29 @@ export default function TradesTable({
                   </span>
                 </td>
                 <td>{fmtNum(qty, 4)}</td>
-                <td>{fmtNum(entry, 4)}</td>
-                <td>{fmtNum(exit, 4)}</td>
+                <td className="font-mono">${fmtNum(entry, 2)}</td>
+                <td className="font-mono">${fmtNum(exit, 2)}</td>
                 <td
-                  className={
+                  className={`font-mono ${
                     Number(pnl) > 0
                       ? "text-emerald-300"
                       : Number(pnl) < 0
                       ? "text-red-300"
                       : ""
+                  }`}
+                >
+                  ${fmtNum(pnl, 2)}
+                </td>
+                <td
+                  className={
+                    Number(returnPct) > 0
+                      ? "text-emerald-300"
+                      : Number(returnPct) < 0
+                      ? "text-red-300"
+                      : ""
                   }
                 >
-                  {fmtNum(pnl, 2)}
+                  {returnPct != null ? `${fmtNum(returnPct, 2)}%` : "-"}
                 </td>
                 <td>{fmtDate(trade.opened_at ?? trade.entry_time)}</td>
                 <td>{fmtDate(trade.closed_at ?? trade.exit_time)}</td>

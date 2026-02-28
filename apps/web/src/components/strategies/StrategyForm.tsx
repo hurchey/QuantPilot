@@ -22,7 +22,7 @@ export default function StrategyForm({
   className = "",
 }: StrategyFormProps) {
   const [name, setName] = useState("");
-  const [strategyType, setStrategyType] = useState(STRATEGY_TYPES[0]?.value ?? "sma_crossover");
+  const [strategyType, setStrategyType] = useState<string>(STRATEGY_TYPES[0]?.value ?? "sma_crossover");
   const [symbol, setSymbol] = useState("SPY");
   const [timeframe, setTimeframe] = useState("1d");
   const [fastWindow, setFastWindow] = useState("10");
@@ -52,10 +52,11 @@ export default function StrategyForm({
 
     setLoading(true);
     try {
-      await apiFetch("/quant/strategies", {
+        const strategyLabel = STRATEGY_TYPES.find((t) => t.value === strategyType)?.label ?? strategyType;
+        await apiFetch("/quant/strategies", {
         method: "POST",
         body: JSON.stringify({
-          name: name.trim() || `${symbol} ${strategyType}`,
+          name: name.trim() || `${strategyLabel} - ${symbol}`,
           strategy_type: strategyType,
           symbol: symbol.trim().toUpperCase(),
           timeframe: timeframe.trim(),

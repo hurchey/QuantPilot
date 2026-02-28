@@ -114,6 +114,9 @@ def run_backtest_endpoint(
         payload.get("fees_bps") or payload.get("commission_bps", 1)
     )
     slippage_bps = float(payload.get("slippage_bps", 1))
+    spread_bps = float(payload.get("spread_bps", 0))
+    adv_dollars = float(payload.get("adv_dollars", 0))
+    execution_delay_bars = int(payload.get("execution_delay_bars", 0))
 
     bars = load_market_bars(
         db=db,
@@ -154,6 +157,9 @@ def run_backtest_endpoint(
                 initial_capital=initial_capital,
                 fees_bps=fees_bps,
                 slippage_bps=slippage_bps,
+                spread_bps=spread_bps,
+                adv_dollars=adv_dollars,
+                execution_delay_bars=execution_delay_bars,
             ),
             fast_window=fast_window,
             slow_window=slow_window,
@@ -219,7 +225,22 @@ def list_backtests(
         q = q.filter(BacktestRun.strategy_id == strategy_id)
 
     runs = q.order_by(BacktestRun.created_at.desc()).limit(limit).all()
-    return [_run_to_dict(r) for r in runs]
+    strategy_ids = [r.strategy_id for r in runs if r.strategy_id]
+    strategies = {}
+    if strategy_ids:
+        for s in db.query(Strategy).filter(Strategy.id.in_(strategy_ids)).all():
+            strategies[s.id] = s
+    out = []
+    for r in runs:
+        d = _run_to_dict(r)
+        s = strategies.get(r.strategy_id)
+        if s:
+            d["strategy_name"] = s.name
+            d["strategy_type"] = s.strategy_type
+            d["symbol"] = s.symbol
+            d["timeframe"] = s.timeframe
+        out.append(d)
+    return out
 
 
 @router.get("/{run_id}")
@@ -295,6 +316,68 @@ def get_backtest_equity(
         .all()
     )
     return [_equity_to_dict(e) for e in rows]
+
+
+@router.get("/{run_id}/trade-analysis")
+def get_backtest_trade_analysis(
+    run_id: int,
+    db: Session = Depends(get_db),
+    workspace=Depends(get_current_workspace),
+) -> dict[str, Any]:
+    """Win/loss analysis: round-trips with entry/exit, PnL, attribution."""
+    run = (
+        db.query(BacktestRun)
+        .filter(BacktestRun.id == run_id, BacktestRun.workspace_id == workspace.id)
+        .first()
+    )
+    if not run:
+        raise HTTPException(status_code=404, detail="Backtest run not found")
+
+    strategy = db.query(Strategy).filter(Strategy.id == run.strategy_id).first()
+    if not strategy:
+        raise HTTPException(status_code=404, detail="Strategy not found")
+
+    from ..quant import load_market_bars
+    from ..quant.serializers import trade_event_from_db_row
+    from ..quant.trade_analysis import analyze_all_trades, summarize_learning
+
+    trades = (
+        db.query(Trade)
+        .filter(Trade.backtest_run_id == run_id)
+        .order_by(Trade.timestamp.asc())
+        .all()
+    )
+    trade_events = [trade_event_from_db_row(t) for t in trades]
+    bars = load_market_bars(
+        db=db,
+        workspace_id=workspace.id,
+        symbol=strategy.symbol,
+        timeframe=strategy.timeframe,
+        start_dt=run.start_date,
+        end_dt=run.end_date,
+    )
+    contexts = analyze_all_trades(trade_events, bars)
+    summary = summarize_learning(contexts)
+    return {
+        "run_id": run_id,
+        "num_trades_analyzed": len(contexts),
+        "summary": summary,
+        "round_trips": [
+            {
+                "entry_ts": c.entry_ts.isoformat(),
+                "exit_ts": c.exit_ts.isoformat(),
+                "entry_price": c.entry_price,
+                "exit_price": c.exit_price,
+                "qty": c.qty,
+                "realized_pnl": c.realized_pnl,
+                "win": c.win,
+                "attribution": c.attribution,
+                "holding_bars": c.holding_bars,
+                "price_return_pct": round(c.price_return_pct, 2),
+            }
+            for c in contexts
+        ],
+    }
 
 
 @router.get("/{run_id}/metrics")

@@ -13,20 +13,24 @@ export default function HomePage() {
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Link href="/workflow" className="rounded-xl border border-slate-800 bg-slate-900 p-4 hover:border-slate-700">
+          <div className="font-semibold">1) Daily Workflow</div>
+          <div className="text-sm text-slate-400 mt-1">Follow the quant trader checklist</div>
+        </Link>
         <Link href="/auth/register" className="rounded-xl border border-slate-800 bg-slate-900 p-4 hover:border-slate-700">
-          <div className="font-semibold">1) Create Account</div>
+          <div className="font-semibold">2) Create Account</div>
           <div className="text-sm text-slate-400 mt-1">Register and create your workspace</div>
         </Link>
         <Link href="/data" className="rounded-xl border border-slate-800 bg-slate-900 p-4 hover:border-slate-700">
-          <div className="font-semibold">2) Upload Data</div>
+          <div className="font-semibold">3) Upload Data</div>
           <div className="text-sm text-slate-400 mt-1">Import OHLCV CSV files</div>
         </Link>
         <Link href="/strategies" className="rounded-xl border border-slate-800 bg-slate-900 p-4 hover:border-slate-700">
-          <div className="font-semibold">3) Build Strategy</div>
+          <div className="font-semibold">4) Build Strategy</div>
           <div className="text-sm text-slate-400 mt-1">Define SMA crossover params</div>
         </Link>
         <Link href="/backtests" className="rounded-xl border border-slate-800 bg-slate-900 p-4 hover:border-slate-700">
-          <div className="font-semibold">4) Run Backtest</div>
+          <div className="font-semibold">5) Run Backtest</div>
           <div className="text-sm text-slate-400 mt-1">Analyze metrics, trades, and equity</div>
         </Link>
       </section>

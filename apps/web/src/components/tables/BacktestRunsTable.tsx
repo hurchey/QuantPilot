@@ -3,7 +3,7 @@
 import React from "react";
 
 type BacktestRun = {
-  id: number;
+  id: number | string;
   strategy_id?: number;
   status?: string;
   created_at?: string;
@@ -13,7 +13,8 @@ type BacktestRun = {
 
 type BacktestRunsTableProps = {
   runs: BacktestRun[];
-  selectedRunId?: number | null;
+  selectedRunId?: number | string | null;
+  onSelectRun?: (id: number | string) => void;
   onSelectRunAction?: (run: BacktestRun) => void;
   className?: string;
 };
@@ -38,6 +39,7 @@ function fmt(value: unknown, digits = 2): string {
 export default function BacktestRunsTable({
   runs,
   selectedRunId = null,
+  onSelectRun,
   onSelectRunAction,
   className = "",
 }: BacktestRunsTableProps) {
@@ -69,13 +71,18 @@ export default function BacktestRunsTable({
               metrics["total_return_pct"] ?? metrics["return_pct"] ?? metrics["total_return"];
             const sharpe = metrics["sharpe_ratio"] ?? metrics["sharpe"];
 
-            const isSelected = selectedRunId === run.id;
+            const isSelected = selectedRunId != null && String(run.id) === String(selectedRunId);
+
+            const handleClick = () => {
+              onSelectRun?.(run.id as number | string);
+              onSelectRunAction?.(run);
+            };
 
             return (
               <tr
                 key={run.id}
-                onClick={() => onSelectRunAction?.(run)}
-                className={onSelectRunAction ? "cursor-pointer" : ""}
+                onClick={handleClick}
+                className={onSelectRun || onSelectRunAction ? "cursor-pointer hover:bg-slate-800/50" : ""}
                 style={{
                   background: isSelected ? "rgba(59,130,246,0.08)" : undefined,
                 }}
@@ -94,7 +101,10 @@ export default function BacktestRunsTable({
                     {run.status ?? "unknown"}
                   </span>
                 </td>
-                <td>{run.strategy_id ?? "-"}</td>
+                <td>
+                  {(run as any).strategy_name ?? (run as any).strategyName ?? run.strategy_id ?? "-"}
+                  {(run as any).symbol ? ` (${(run as any).symbol})` : ""}
+                </td>
                 <td>{totalReturn !== undefined ? `${fmt(totalReturn)}%` : "-"}</td>
                 <td>{fmt(sharpe)}</td>
                 <td>{formatDate(run.created_at)}</td>

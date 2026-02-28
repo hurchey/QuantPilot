@@ -56,6 +56,9 @@ class Workspace(Base):
     strategies = relationship("Strategy", back_populates="workspace", cascade="all, delete-orphan")
     market_bars = relationship("MarketBar", back_populates="workspace", cascade="all, delete-orphan")
     backtest_runs = relationship("BacktestRun", back_populates="workspace", cascade="all, delete-orphan")
+    option_chain_snapshots = relationship(
+        "OptionChainSnapshot", back_populates="workspace", cascade="all, delete-orphan"
+    )
 
 
 class Strategy(Base):
@@ -156,3 +159,77 @@ class EquityPoint(Base):
     drawdown = Column(Float, nullable=False, default=0.0)
 
     backtest_run = relationship("BacktestRun", back_populates="equity_points")
+
+
+# --- Options Quant Data Layer (Phase A) ---
+
+
+class OptionChainSnapshot(Base):
+    """
+    Stored option chain snapshot for a symbol at a point in time.
+    One row per option (call or put) per strike per expiry.
+    """
+
+    __tablename__ = "option_chain_snapshots"
+    __table_args__ = (
+        UniqueConstraint(
+            "workspace_id", "symbol", "snapshot_at", "expiry", "option_type", "strike",
+            name="uq_option_chain_snapshot",
+        ),
+        Index(
+            "ix_option_chain_ws_symbol_at",
+            "workspace_id", "symbol", "snapshot_at",
+        ),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    workspace_id = Column(Integer, ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    symbol = Column(String(50), nullable=False, index=True)
+    snapshot_at = Column(DateTime, nullable=False, index=True)
+
+    expiry = Column(DateTime, nullable=False, index=True)  # expiration date
+    option_type = Column(String(10), nullable=False)  # "call" or "put"
+    strike = Column(Float, nullable=False)
+
+    bid = Column(Float, nullable=True)
+    ask = Column(Float, nullable=True)
+    last = Column(Float, nullable=True)
+    volume = Column(Float, nullable=True, default=0.0)
+    open_interest = Column(Float, nullable=True, default=0.0)
+    implied_volatility = Column(Float, nullable=True)
+
+    created_at = Column(DateTime, default=utcnow, nullable=False)
+
+    workspace = relationship("Workspace", back_populates="option_chain_snapshots")
+
+
+class RiskFreeRate(Base):
+    """
+    Risk-free rate by date (e.g. SOFR, T-bill).
+    Used for options pricing and Greeks.
+    """
+
+    __tablename__ = "risk_free_rates"
+    __table_args__ = (UniqueConstraint("rate_date", name="uq_risk_free_rate_date"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    rate_date = Column(DateTime, nullable=False, unique=True, index=True)  # date only
+    rate = Column(Float, nullable=False)  # decimal, e.g. 0.05 for 5%
+    source = Column(String(50), nullable=True)  # e.g. "config", "fred"
+
+
+class Dividend(Base):
+    """
+    Dividend by symbol and ex-date.
+    Used for options pricing (discrete dividends) and corporate action adjustments.
+    """
+
+    __tablename__ = "dividends"
+    __table_args__ = (UniqueConstraint("symbol", "ex_date", name="uq_dividend_symbol_exdate"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    symbol = Column(String(50), nullable=False, index=True)
+    ex_date = Column(DateTime, nullable=False, index=True)
+    amount = Column(Float, nullable=False)
+    currency = Column(String(10), nullable=True, default="USD")

@@ -3,13 +3,27 @@ from __future__ import annotations
 from dataclasses import asdict
 from typing import Any
 
+from .costs import market_impact_bps
 from .metrics import compute_metrics
 from .portfolio import PortfolioState
 from .signals import generate_sma_crossover_positions
 from .types import BacktestConfig, BacktestResult, Bar, EquityPoint
 
 
-def _coerce_trade_qty(cash: float, price: float, config: BacktestConfig) -> float:
+def _impact_bps_for_trade(
+    notional: float, config: BacktestConfig
+) -> float:
+    if config.adv_dollars <= 0:
+        return 0.0
+    return market_impact_bps(notional, config.adv_dollars, config.impact_coef)
+
+
+def _coerce_trade_qty(
+    cash: float,
+    price: float,
+    bar_volume: float,
+    config: BacktestConfig,
+) -> float:
     if price <= 0:
         return 0.0
 
@@ -18,6 +32,12 @@ def _coerce_trade_qty(cash: float, price: float, config: BacktestConfig) -> floa
     else:
         # approximate all-in qty; actual fee clipping happens inside PortfolioState.buy()
         qty = cash / float(price)
+
+    # Liquidity: ADV limit (max position as % of ADV)
+    if config.adv_dollars > 0 and config.max_position_pct_adv > 0:
+        adv_shares = config.adv_dollars / price if price > 0 else 0
+        max_qty = adv_shares * config.max_position_pct_adv
+        qty = min(qty, max_qty)
 
     if not config.allow_fractional:
         qty = float(int(qty))
@@ -50,32 +70,47 @@ def run_backtest(
     trades = []
     equity_curve: list[EquityPoint] = []
 
+    # Execution delay: signal at bar i-d fills at bar i (no lookahead)
+    delay = max(0, config.execution_delay_bars)
+
     for i, bar in enumerate(bars):
-        desired_pos = 1 if positions[i] else 0
+        # Effective signal: decision made at bar i-delay, executed at bar i
+        sig_idx = max(0, i - delay)
+        desired_pos = 1 if positions[sig_idx] else 0
         current_pos = 1 if portfolio.is_long() else 0
+        exec_price = bar.close
 
         # Position transitions (long/flat only)
         if desired_pos == 1 and current_pos == 0:
-            qty = _coerce_trade_qty(portfolio.cash, bar.close, config)
+            qty = _coerce_trade_qty(
+                portfolio.cash, exec_price, bar.volume, config
+            )
+            impact_bps = _impact_bps_for_trade(qty * exec_price, config)
             trade = portfolio.buy(
                 timestamp=bar.timestamp,
                 symbol=config.symbol,
-                market_price=bar.close,
+                market_price=exec_price,
                 qty=qty,
                 fees_bps=config.fees_bps,
                 slippage_bps=config.slippage_bps,
+                spread_bps=config.spread_bps,
+                impact_bps=impact_bps,
                 reason="signal_enter",
             )
             if trade:
                 trades.append(trade)
 
         elif desired_pos == 0 and current_pos == 1:
+            notional = portfolio.position_qty * exec_price
+            impact_bps = _impact_bps_for_trade(notional, config)
             trade = portfolio.sell_all(
                 timestamp=bar.timestamp,
                 symbol=config.symbol,
-                market_price=bar.close,
+                market_price=exec_price,
                 fees_bps=config.fees_bps,
                 slippage_bps=config.slippage_bps,
+                spread_bps=config.spread_bps,
+                impact_bps=impact_bps,
                 reason="signal_exit",
             )
             if trade:
@@ -97,12 +132,16 @@ def run_backtest(
     # Optional final close to realize PnL
     if config.close_final_position and portfolio.is_long():
         last_bar = bars[-1]
+        notional = portfolio.position_qty * last_bar.close
+        impact_bps = _impact_bps_for_trade(notional, config)
         trade = portfolio.sell_all(
             timestamp=last_bar.timestamp,
             symbol=config.symbol,
             market_price=last_bar.close,
             fees_bps=config.fees_bps,
             slippage_bps=config.slippage_bps,
+            spread_bps=config.spread_bps,
+            impact_bps=impact_bps,
             reason="final_close",
         )
         if trade:
