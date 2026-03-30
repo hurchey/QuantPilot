@@ -4,12 +4,12 @@ Risk models: covariance shrinkage, factor exposure.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Optional
 
 
 def ledoit_wolf_shrinkage(
     returns: list[list[float]],
-    delta: float | None = None,
+    delta: Optional[float] = None,
 ) -> tuple[list[list[float]], float]:
     """
     Ledoit-Wolf covariance shrinkage toward constant correlation.

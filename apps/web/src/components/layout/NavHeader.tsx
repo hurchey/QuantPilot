@@ -1,12 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+
+function cx(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(" ");
+}
+
+const NAV_LINKS = [
+  { href: "/research", label: "RESEARCH" },
+  { href: "/research/universe", label: "UNIVERSE" },
+] as const;
 
 export default function NavHeader() {
   const { isAuthenticated, logout, user, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   function handleLogout() {
     logout();
@@ -14,59 +24,67 @@ export default function NavHeader() {
   }
 
   return (
-    <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur">
+    <header className="border-b border-neutral-800 bg-black/95 backdrop-blur-sm">
       <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
-        <Link href="/" className="font-semibold text-lg">
-          QuantPilot
+        <Link
+          href="/"
+          className="font-bold text-sm tracking-[0.2em] text-white uppercase hover:opacity-80 transition-opacity"
+        >
+          QUANTPILOT
         </Link>
-        <nav className="flex items-center gap-4 text-sm">
-          <Link href="/dashboard" className="hover:text-white text-slate-300">
-            Dashboard
-          </Link>
-          <Link href="/workflow" className="hover:text-white text-slate-300">
-            Workflow
-          </Link>
-          <Link href="/strategies" className="hover:text-white text-slate-300">
-            Strategies
-          </Link>
-          <Link href="/data" className="hover:text-white text-slate-300">
-            Market Data
-          </Link>
-          <Link href="/backtests" className="hover:text-white text-slate-300">
-            Backtests
-          </Link>
-          <Link href="/backtest-pipeline" className="hover:text-white text-slate-300">
-            Pipeline
-          </Link>
-          <Link href="/stocks" className="hover:text-white text-slate-300">
-            Stock Profile
-          </Link>
+
+        <nav className="flex items-center gap-1">
+          {NAV_LINKS.map(({ href, label }) => {
+            const isActive = pathname === href || pathname?.startsWith(href + "/");
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={cx(
+                  "px-2.5 py-1.5 text-[0.65rem] font-semibold tracking-[0.1em] uppercase transition-all",
+                  isActive
+                    ? "text-white border-b border-white"
+                    : "text-neutral-500 hover:text-white"
+                )}
+              >
+                {label}
+              </Link>
+            );
+          })}
+
+          <span className="mx-2 h-3 w-px bg-neutral-800" />
 
           {loading ? (
-            <span className="text-slate-500">...</span>
+            <span className="text-neutral-600 text-[0.65rem]">...</span>
           ) : isAuthenticated ? (
             <>
               <Link
-                href="/dashboard"
-                className="hover:text-white text-slate-300"
+                href="/research"
+                className="px-2 py-1 text-[0.65rem] font-semibold tracking-[0.1em] uppercase text-neutral-500 hover:text-white transition-colors"
                 title={user?.email || user?.name || "Account"}
               >
-                Account
+                ACCT
               </Link>
               <button
                 onClick={handleLogout}
-                className="hover:text-white text-slate-300"
+                className="px-2 py-1 text-[0.65rem] font-semibold tracking-[0.1em] uppercase text-neutral-600 hover:text-red-400 transition-colors"
               >
-                Log out
+                EXIT
               </button>
             </>
           ) : (
             <>
-              <Link href="/auth/login" className="hover:text-white text-slate-300">
-                Login
+              <Link
+                href="/auth/login"
+                className="px-2 py-1 text-[0.65rem] font-semibold tracking-[0.1em] uppercase text-neutral-500 hover:text-white transition-colors"
+              >
+                LOGIN
               </Link>
-              <Link href="/auth/register" className="hover:text-white text-slate-300">
-                Register
+              <Link
+                href="/auth/register"
+                className="px-2 py-1 text-[0.65rem] font-semibold tracking-[0.1em] uppercase bg-white text-black transition-colors hover:bg-neutral-200"
+              >
+                REGISTER
               </Link>
             </>
           )}

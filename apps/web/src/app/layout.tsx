@@ -5,7 +5,7 @@ import NavHeader from "@/components/layout/NavHeader";
 
 export const metadata: Metadata = {
   title: "QuantPilot",
-  description: "Quant-focused full-stack SaaS project",
+  description: "Quantitative research into extreme price dislocations",
 };
 
 export default function RootLayout({
@@ -13,7 +13,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className="bg-slate-950 text-slate-100 min-h-screen">
+      <body className="bg-black text-neutral-300 min-h-screen">
         <div className="min-h-screen">
           <NavHeader />
 

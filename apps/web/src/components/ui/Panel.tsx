@@ -17,13 +17,22 @@ export function Panel({
   className = "",
 }: PanelProps) {
   return (
-    <section className={`rounded-2xl border border-slate-800 bg-slate-900 ${className}`}>
+    <section
+      className={`border border-neutral-800 bg-neutral-950 relative ${className}`}
+    >
+      {/* Top glow line */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-neutral-700 to-transparent" />
+
       {(title || subtitle || actions) && (
-        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-800 px-4 py-3">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-neutral-800 px-4 py-3">
           <div>
-            {title ? <h2 className="text-lg font-semibold">{title}</h2> : null}
+            {title ? (
+              <h2 className="text-xs font-semibold tracking-[0.12em] uppercase text-neutral-400">
+                {title}
+              </h2>
+            ) : null}
             {subtitle ? (
-              <p className="text-sm text-slate-400 mt-0.5">{subtitle}</p>
+              <p className="text-[0.7rem] text-neutral-600 mt-0.5">{subtitle}</p>
             ) : null}
           </div>
           {actions ? <div className="flex items-center gap-2">{actions}</div> : null}

@@ -27,7 +27,7 @@ def _get_ensemble():
     return _ensemble
 
 
-@dataclass(slots=True)
+@dataclass
 class SentimentScore:
     """Composite sentiment/buzz score for a symbol."""
 

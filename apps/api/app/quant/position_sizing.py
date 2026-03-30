@@ -4,17 +4,19 @@ Position sizing: vol targeting, Kelly criterion.
 
 from __future__ import annotations
 
+from typing import Optional
+
 import math
 from dataclasses import dataclass
 
 
-@dataclass(slots=True)
+@dataclass
 class SizingResult:
     """Position size as fraction of capital."""
 
     weight: float  # 0-1, fraction of capital
     method: str
-    raw_kelly: float | None = None
+    raw_kelly: Optional[float] = None
 
 
 def kelly_fraction(

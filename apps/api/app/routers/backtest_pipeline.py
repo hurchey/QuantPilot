@@ -10,7 +10,7 @@ Endpoints for quant backtesting workflow:
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -35,7 +35,7 @@ router = APIRouter(prefix="/backtest-pipeline", tags=["backtest-pipeline"])
 
 @router.get("/universe")
 def get_stock_universe(
-    date: str | None = Query(None, description="YYYY-MM-DD for historical universe"),
+    date: Optional[str] = Query(None, description="YYYY-MM-DD for historical universe"),
     state: str = Query("active", description="active or delisted"),
 ) -> dict[str, Any]:
     """

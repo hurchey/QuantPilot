@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from math import sqrt
 from statistics import pstdev
-from typing import Sequence
+from typing import Optional, Sequence
 
 
-def sma(values: Sequence[float], window: int) -> list[float | None]:
+def sma(values: Sequence[float], window: int) -> list[Optional[float]]:
     if window <= 0:
         raise ValueError("window must be > 0")
 
-    out: list[float | None] = [None] * len(values)
+    out: list[Optional[float]] = [None] * len(values)
     if len(values) < window:
         return out
 
@@ -23,16 +23,16 @@ def sma(values: Sequence[float], window: int) -> list[float | None]:
     return out
 
 
-def ema(values: Sequence[float], window: int) -> list[float | None]:
+def ema(values: Sequence[float], window: int) -> list[Optional[float]]:
     if window <= 0:
         raise ValueError("window must be > 0")
     if not values:
         return []
 
     alpha = 2.0 / (window + 1.0)
-    out: list[float | None] = [None] * len(values)
+    out: list[Optional[float]] = [None] * len(values)
 
-    ema_val: float | None = None
+    ema_val: Optional[float] = None
     for i, value in enumerate(values):
         v = float(value)
         if ema_val is None:
@@ -59,9 +59,9 @@ def pct_returns(values: Sequence[float]) -> list[float]:
     return returns
 
 
-def rolling_volatility(values: Sequence[float], window: int) -> list[float | None]:
+def rolling_volatility(values: Sequence[float], window: int) -> list[Optional[float]]:
     rets = pct_returns(values)
-    out: list[float | None] = [None] * len(values)
+    out: list[Optional[float]] = [None] * len(values)
     if window <= 1 or len(rets) < window:
         return out
 

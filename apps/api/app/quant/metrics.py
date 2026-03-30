@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+from typing import Optional, Union
+
 import math
 from statistics import mean, stdev
 
 from .types import Bar, EquityPoint, TradeEvent
 
 
-def _safe_float(x: float | int | None) -> float | None:
+def _safe_float(x: Optional[Union[float, int]]) -> Optional[float]:
     if x is None:
         return None
     v = float(x)
@@ -46,7 +48,7 @@ def compute_metrics(
     bars: list[Bar],
     periods_per_year: int = 252,
     risk_free_rate: float = 0.0,
-) -> dict[str, float | int | None]:
+) -> dict[str, Optional[Union[float, int]]]:
     if not equity_curve:
         return {
             "total_return": 0.0,
@@ -67,9 +69,9 @@ def compute_metrics(
 
     rets = equity_returns(equity_curve)
 
-    annualized_return: float | None = None
-    volatility: float | None = None
-    sharpe: float | None = None
+    annualized_return: Optional[float] = None
+    volatility: Optional[float] = None
+    sharpe: Optional[float] = None
 
     if rets:
         n_periods = len(rets)
@@ -96,7 +98,7 @@ def compute_metrics(
     gross_loss = abs(sum((t.realized_pnl or 0.0) for t in losses))
     profit_factor = (gross_profit / gross_loss) if gross_loss > 0 else (None if gross_profit == 0 else float("inf"))
 
-    benchmark_return: float | None = None
+    benchmark_return: Optional[float] = None
     if len(bars) >= 2 and bars[0].close:
         benchmark_return = (bars[-1].close / bars[0].close) - 1.0
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Optional
+
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -13,7 +15,7 @@ from .costs import (
 from .types import TradeEvent
 
 
-@dataclass(slots=True)
+@dataclass
 class PortfolioState:
     cash: float
     position_qty: float = 0.0
@@ -36,8 +38,8 @@ class PortfolioState:
         slippage_bps: float,
         spread_bps: float = 0.0,
         impact_bps: float = 0.0,
-        reason: str | None = None,
-    ) -> TradeEvent | None:
+        reason: Optional[str] = None,
+    ) -> Optional[TradeEvent]:
         qty = float(qty)
         if qty <= 0:
             return None
@@ -96,8 +98,8 @@ class PortfolioState:
         slippage_bps: float,
         spread_bps: float = 0.0,
         impact_bps: float = 0.0,
-        reason: str | None = None,
-    ) -> TradeEvent | None:
+        reason: Optional[str] = None,
+    ) -> Optional[TradeEvent]:
         if self.position_qty <= 0:
             return None
 

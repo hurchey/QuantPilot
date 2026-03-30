@@ -5,6 +5,8 @@ Option chain snapshots, risk-free rates, dividends.
 
 from __future__ import annotations
 
+from typing import Optional
+
 from datetime import datetime
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
@@ -69,7 +71,7 @@ def compute_option_greeks(
 @router.get("/{symbol}/chain")
 def get_option_chain(
     symbol: str,
-    expiry: str | None = Query(None, description="Expiry date YYYY-MM-DD"),
+    expiry: Optional[str] = Query(None, description="Expiry date YYYY-MM-DD"),
     include_greeks: bool = Query(False, description="Compute IV + Greeks for each option (Phase B)"),
     rate: float = Query(0.05, ge=0, le=0.5, description="Risk-free rate (decimal) when include_greeks=True"),
     db: Session = Depends(get_db),
@@ -97,7 +99,7 @@ def get_option_chain(
 @router.post("/{symbol}/snapshot")
 def create_option_snapshot(
     symbol: str,
-    expiry: str | None = Query(None),
+    expiry: Optional[str] = Query(None),
     workspace: Workspace = Depends(get_current_workspace),
     db: Session = Depends(get_db),
 ) -> dict:
@@ -121,7 +123,7 @@ def create_option_snapshot(
 
 @router.get("/snapshots")
 def list_option_snapshots(
-    symbol: str | None = Query(None),
+    symbol: Optional[str] = Query(None),
     limit: int = Query(50, ge=1, le=200),
     workspace: Workspace = Depends(get_current_workspace),
     db: Session = Depends(get_db),
@@ -156,7 +158,7 @@ def list_symbol_snapshots(
 
 @router.get("/rates")
 def get_rates(
-    as_of: str | None = Query(None, description="Date YYYY-MM-DD"),
+    as_of: Optional[str] = Query(None, description="Date YYYY-MM-DD"),
     db: Session = Depends(get_db),
 ) -> dict:
     """
@@ -174,8 +176,8 @@ def get_rates(
 
 @router.get("/rates/history")
 def get_rates_history(
-    start_date: str | None = Query(None),
-    end_date: str | None = Query(None),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
     limit: int = Query(100, ge=1, le=500),
     db: Session = Depends(get_db),
 ) -> list[dict]:

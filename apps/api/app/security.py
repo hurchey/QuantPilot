@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, Optional
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -21,7 +21,7 @@ def verify_password(plain_password: str, password_hash: str) -> bool:
     return pwd_context.verify(plain_password, password_hash)
 
 
-def create_access_token(*, subject: str, expires_minutes: int | None = None) -> str:
+def create_access_token(*, subject: str, expires_minutes: Optional[int] = None) -> str:
     exp_minutes = expires_minutes or settings.access_token_exp_minutes
     now = datetime.now(timezone.utc)
     expire = now + timedelta(minutes=exp_minutes)

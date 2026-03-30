@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -22,7 +22,7 @@ def _utcnow_naive() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
-def _parse_dt(value: Any, field_name: str) -> datetime | None:
+def _parse_dt(value: Any, field_name: str) -> Optional[datetime]:
     if value is None or value == "":
         return None
     if isinstance(value, datetime):
@@ -215,7 +215,7 @@ def run_backtest_endpoint(
 
 @router.get("")
 def list_backtests(
-    strategy_id: int | None = Query(None),
+    strategy_id: Optional[int] = Query(None),
     limit: int = Query(50, ge=1, le=500),
     db: Session = Depends(get_db),
     workspace=Depends(get_current_workspace),

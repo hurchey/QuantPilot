@@ -6,7 +6,7 @@ https://finnhub.io/docs/api
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, Optional, Union
 
 import requests
 
@@ -21,7 +21,7 @@ def _get_token() -> str:
     return settings.finnhub_api_key
 
 
-def _request(path: str, params: dict[str, str] | None = None) -> dict[str, Any] | list[Any]:
+def _request(path: str, params: Optional[dict[str, str]] = None) -> Union[dict[str, Any], list[Any]]:
     token = _get_token()
     url = f"{BASE_URL}{path}"
     p = params or {}
@@ -33,8 +33,8 @@ def _request(path: str, params: dict[str, str] | None = None) -> dict[str, Any] 
 
 def get_company_news(
     symbol: str,
-    from_date: str | None = None,
-    to_date: str | None = None,
+    from_date: Optional[str] = None,
+    to_date: Optional[str] = None,
 ) -> list[dict[str, Any]]:
     """
     Company news for symbol. from_date/to_date: YYYY-MM-DD.

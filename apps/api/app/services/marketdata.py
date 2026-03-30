@@ -8,7 +8,7 @@ Provides reliable bid/ask for both calls and puts. Free tier: 100 req/day.
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Optional
 
 import requests
 
@@ -25,7 +25,7 @@ def _get_token() -> str:
 
 def fetch_option_chain(
     symbol: str,
-    expiry: str | None = None,
+    expiry: Optional[str] = None,
 ) -> dict[str, Any]:
     """
     Fetch option chain from Market Data API.
@@ -60,7 +60,7 @@ def fetch_option_chain(
     underlying_prices = data.get("underlyingPrice", [])
     expirations_ts = data.get("expiration", [])
 
-    def _safe_float(val: Any, default: float | None = None) -> float | None:
+    def _safe_float(val: Any, default: Optional[float] = None) -> Optional[float]:
         if val is None or (isinstance(val, float) and (val != val)):
             return default
         try:

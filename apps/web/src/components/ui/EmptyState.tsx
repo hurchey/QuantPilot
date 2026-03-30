@@ -18,19 +18,21 @@ export default function EmptyState({
 }: EmptyStateProps) {
   return (
     <div
-      className={`rounded-xl border border-slate-800 bg-slate-950/50 p-6 text-center ${className}`}
+      className={`border border-neutral-800 bg-neutral-950/50 p-6 text-center ${className}`}
     >
-      <div className="text-sm font-semibold text-slate-200">{title}</div>
+      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-400">
+        {title}
+      </div>
 
       {description ? (
-        <p className="mt-2 text-sm text-slate-400">{description}</p>
+        <p className="mt-2 text-[0.75rem] text-neutral-600">{description}</p>
       ) : null}
 
       {actionLabel && onAction ? (
         <button
           type="button"
           onClick={onAction}
-          className="mt-4 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm hover:bg-slate-800"
+          className="mt-4 border border-neutral-700 bg-transparent px-3 py-2 text-[0.65rem] uppercase tracking-wider text-neutral-400 hover:border-white hover:text-white transition-all"
         >
           {actionLabel}
         </button>

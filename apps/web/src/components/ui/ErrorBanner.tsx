@@ -11,7 +11,7 @@ type ErrorBannerProps = {
 };
 
 export default function ErrorBanner({
-  title = "Error",
+  title = "ERROR",
   message,
   error,
   onDismissAction,
@@ -23,12 +23,14 @@ export default function ErrorBanner({
     <div
       role="alert"
       aria-live="polite"
-      className={`rounded-xl border border-red-800/70 bg-red-950/30 px-4 py-3 text-red-200 ${className}`}
+      className={`border border-red-900 bg-red-950/20 px-4 py-3 text-red-400 ${className}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-semibold">{title}</p>
-          <p className="mt-1 text-sm text-red-200/90 whitespace-pre-wrap break-words">
+          <p className="text-[0.65rem] font-bold uppercase tracking-[0.12em]">
+            {title}
+          </p>
+          <p className="mt-1 text-xs text-red-400/80 whitespace-pre-wrap break-words">
             {text}
           </p>
         </div>
@@ -37,7 +39,7 @@ export default function ErrorBanner({
           <button
             type="button"
             onClick={onDismissAction}
-            className="shrink-0 rounded-md border border-red-700 px-2 py-1 text-xs hover:bg-red-900/40"
+            className="shrink-0 border border-red-800 px-2 py-1 text-[0.6rem] uppercase tracking-wider hover:bg-red-900/30 transition-colors"
           >
             Dismiss
           </button>

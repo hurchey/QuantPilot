@@ -4,7 +4,7 @@ import csv
 import io
 import random
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, Optional
 
 import pyarrow.parquet as pq
 import yfinance as yf
@@ -598,8 +598,8 @@ def list_symbols(
 def get_bars(
     symbol: str = Query(...),
     timeframe: str = Query("1d"),
-    start: str | None = Query(None),
-    end: str | None = Query(None),
+    start: Optional[str] = Query(None),
+    end: Optional[str] = Query(None),
     limit: int = Query(500, ge=1, le=5000),
     db: Session = Depends(get_db),
     workspace=Depends(get_current_workspace),

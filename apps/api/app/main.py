@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
 from .db import Base, engine
-from .routers import auth, backtest_pipeline, backtests, dashboard, data, health, options, strategies, stocks
+from .routers import auth, backtest_pipeline, backtests, dashboard, data, health, options, research, strategies, stocks
 
 
 def _build_allowed_origins(frontend_url: str) -> list[str]:
@@ -64,3 +64,4 @@ app.include_router(backtest_pipeline.router, prefix="/quant")
 app.include_router(dashboard.router, prefix="/quant")
 app.include_router(stocks.router, prefix="/quant")
 app.include_router(options.router, prefix="/quant")
+app.include_router(research.router, prefix="/quant")

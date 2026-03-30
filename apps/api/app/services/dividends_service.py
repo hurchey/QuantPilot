@@ -5,6 +5,8 @@ Fetches from yfinance; can persist to DB for backtesting.
 
 from __future__ import annotations
 
+from typing import Optional
+
 from datetime import datetime, timezone
 
 import yfinance as yf
@@ -85,8 +87,8 @@ def persist_dividends(
 def get_dividends(
     db: Session,
     symbol: str,
-    start_date: datetime | None = None,
-    end_date: datetime | None = None,
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
 ) -> list[dict]:
     """
     Get dividends from DB for a symbol.

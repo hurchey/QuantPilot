@@ -1,7 +1,7 @@
 # apps/api/app/deps.py
 from __future__ import annotations
 
-from typing import Generator
+from typing import Generator, Optional
 
 from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
@@ -20,7 +20,7 @@ def get_db() -> Generator[Session, None, None]:
         db.close()
 
 
-def _extract_token_from_request(request: Request) -> str | None:
+def _extract_token_from_request(request: Request) -> Optional[str]:
     # 1) Cookie (preferred)
     cookie_token = request.cookies.get(settings.auth_cookie_name)
     if cookie_token:

@@ -11,7 +11,7 @@ from __future__ import annotations
 import csv
 import io
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional, Union
 
 import requests
 
@@ -140,7 +140,7 @@ def get_time_series_intraday(
     symbol: str,
     interval: str = "5min",
     outputsize: str = "compact",
-    month: str | None = None,
+    month: Optional[str] = None,
 ) -> list[dict[str, Any]]:
     """
     Intraday OHLCV (TIME_SERIES_INTRADAY).
@@ -189,7 +189,7 @@ def _parse_ts_into_rows(
 
 
 def get_listing_status(
-    date: str | None = None,
+    date: Optional[str] = None,
     state: str = "active",
 ) -> list[dict[str, Any]]:
     """
@@ -235,10 +235,10 @@ def get_listing_status(
 
 
 def get_news_sentiment(
-    tickers: str | list[str],
+    tickers: Union[str, list[str]],
     limit: int = 50,
-    time_from: str | None = None,
-    time_to: str | None = None,
+    time_from: Optional[str] = None,
+    time_to: Optional[str] = None,
     sort: str = "LATEST",
 ) -> list[dict[str, Any]]:
     """
@@ -318,7 +318,7 @@ def get_sma(
     return rows
 
 
-def _safe_float(val: Any) -> float | None:
+def _safe_float(val: Any) -> Optional[float]:
     if val is None:
         return None
     try:
@@ -327,7 +327,7 @@ def _safe_float(val: Any) -> float | None:
         return None
 
 
-def _safe_int(val: Any) -> int | None:
+def _safe_int(val: Any) -> Optional[int]:
     if val is None:
         return None
     try:

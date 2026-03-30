@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -54,7 +54,7 @@ class UserOut(BaseModel):
 
     id: int
     email: str
-    created_at: datetime | None = None
+    created_at: Optional[datetime] = None
 
 
 class WorkspaceOut(BaseModel):
@@ -71,7 +71,7 @@ class AuthResponse(BaseModel):
 
 class MeResponse(BaseModel):
     user: UserOut
-    workspace: WorkspaceOut | None = None
+    workspace: Optional[WorkspaceOut] = None
 
 
 # =========================
@@ -126,15 +126,15 @@ class StrategyCreateRequest(StrategyBase):
 
 
 class StrategyUpdateRequest(BaseModel):
-    name: str | None = Field(default=None, min_length=1, max_length=255)
-    strategy_type: str | None = Field(default=None, min_length=1, max_length=100)
-    symbol: str | None = Field(default=None, min_length=1, max_length=50)
-    timeframe: str | None = Field(default=None, min_length=1, max_length=20)
-    parameters_json: dict[str, Any] | None = None
+    name: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    strategy_type: Optional[str] = Field(default=None, min_length=1, max_length=100)
+    symbol: Optional[str] = Field(default=None, min_length=1, max_length=50)
+    timeframe: Optional[str] = Field(default=None, min_length=1, max_length=20)
+    parameters_json: Optional[dict[str, Any]] = None
 
     @field_validator("name")
     @classmethod
-    def clean_name(cls, v: str | None) -> str | None:
+    def clean_name(cls, v: Optional[str]) -> Optional[str]:
         if v is None:
             return v
         v = v.strip()
@@ -144,7 +144,7 @@ class StrategyUpdateRequest(BaseModel):
 
     @field_validator("strategy_type")
     @classmethod
-    def clean_strategy_type(cls, v: str | None) -> str | None:
+    def clean_strategy_type(cls, v: Optional[str]) -> Optional[str]:
         if v is None:
             return v
         v = v.strip()
@@ -154,7 +154,7 @@ class StrategyUpdateRequest(BaseModel):
 
     @field_validator("symbol")
     @classmethod
-    def clean_symbol(cls, v: str | None) -> str | None:
+    def clean_symbol(cls, v: Optional[str]) -> Optional[str]:
         if v is None:
             return v
         v = v.strip().upper()
@@ -164,7 +164,7 @@ class StrategyUpdateRequest(BaseModel):
 
     @field_validator("timeframe")
     @classmethod
-    def clean_timeframe(cls, v: str | None) -> str | None:
+    def clean_timeframe(cls, v: Optional[str]) -> Optional[str]:
         if v is None:
             return v
         v = v.strip()
@@ -183,8 +183,8 @@ class StrategyOut(BaseModel):
     symbol: str
     timeframe: str
     parameters_json: dict[str, Any]
-    created_at: datetime | None = None
-    updated_at: datetime | None = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
 class StrategySummaryOut(BaseModel):
     id: int
@@ -234,8 +234,8 @@ class MarketBarOut(BaseModel):
 
 class BacktestRunRequest(BaseModel):
     strategy_id: int
-    start_date: datetime | None = None
-    end_date: datetime | None = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
     initial_capital: float = Field(default=10_000.0, gt=0)
     fees_bps: float = Field(default=1.0, ge=0)
     slippage_bps: float = Field(default=1.0, ge=0)
@@ -247,15 +247,15 @@ class BacktestRunOut(BaseModel):
     id: int
     workspace_id: int
     strategy_id: int
-    start_date: datetime | None = None
-    end_date: datetime | None = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
     initial_capital: float
     fees_bps: float
     slippage_bps: float
     status: str
     metrics_json: dict[str, Any] = Field(default_factory=dict)
-    created_at: datetime | None = None
-    completed_at: datetime | None = None
+    created_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
 
 
 class BacktestRunMetaOut(BaseModel):
@@ -275,7 +275,7 @@ class BacktestRunCreateResponse(BaseModel):
 
 class BacktestRunDetailResponse(BaseModel):
     run: BacktestRunOut
-    strategy: StrategySummaryOut | None = None
+    strategy: Optional[StrategySummaryOut] = None
 
 
 class TradeOut(BaseModel):
@@ -289,7 +289,7 @@ class TradeOut(BaseModel):
     price: float
     timestamp: datetime
     fee: float
-    realized_pnl: float | None = None
+    realized_pnl: Optional[float] = None
 
 
 class EquityPointOut(BaseModel):
@@ -314,23 +314,23 @@ class BacktestMetricsOut(BaseModel):
 class DashboardSummaryResponse(BaseModel):
     strategies_count: int
     backtests_count: int
-    latest_run_id: int | None = None
-    latest_status: str | None = None
+    latest_run_id: Optional[int] = None
+    latest_status: Optional[str] = None
     latest_metrics: dict[str, Any] = Field(default_factory=dict)
-    best_sharpe: float | None = None
-    best_total_return: float | None = None
+    best_sharpe: Optional[float] = None
+    best_total_return: Optional[float] = None
 
 
 class DashboardRiskResponse(BaseModel):
-    latest_run_id: int | None = None
-    sharpe: float | None = None
-    volatility: float | None = None
-    max_drawdown: float | None = None
-    win_rate: float | None = None
+    latest_run_id: Optional[int] = None
+    sharpe: Optional[float] = None
+    volatility: Optional[float] = None
+    max_drawdown: Optional[float] = None
+    win_rate: Optional[float] = None
 
 
 class PerformancePointOut(BaseModel):
-    timestamp: str | None = None
+    timestamp: Optional[str] = None
     equity: float
     drawdown: float
 
@@ -338,14 +338,14 @@ class PerformancePointOut(BaseModel):
 class RecentRunOut(BaseModel):
     id: int
     strategy_id: int
-    created_at: str | None = None
+    created_at: Optional[str] = None
     status: str
-    total_return: float | None = None
-    sharpe: float | None = None
-    max_drawdown: float | None = None
+    total_return: Optional[float] = None
+    sharpe: Optional[float] = None
+    max_drawdown: Optional[float] = None
 
 
 class DashboardPerformanceResponse(BaseModel):
-    latest_run_id: int | None = None
+    latest_run_id: Optional[int] = None
     equity_curve: list[PerformancePointOut] = Field(default_factory=list)
     recent_runs: list[RecentRunOut] = Field(default_factory=list)

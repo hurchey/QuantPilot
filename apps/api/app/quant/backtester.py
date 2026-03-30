@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict
-from typing import Any
+from typing import Any, Optional
 
 from .costs import market_impact_bps
 from .metrics import compute_metrics
@@ -50,7 +50,7 @@ def run_backtest(
     bars: list[Bar],
     positions: list[int],
     config: BacktestConfig,
-    meta: dict[str, Any] | None = None,
+    meta: Optional[dict[str, Any]] = None,
 ) -> BacktestResult:
     if not bars:
         return BacktestResult(

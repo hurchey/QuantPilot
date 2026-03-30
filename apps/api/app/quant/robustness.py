@@ -9,12 +9,12 @@ Robustness gate: only accept strategy updates that beat current model OOS.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Optional
 
 from .types import BacktestResult
 
 
-@dataclass(slots=True)
+@dataclass
 class RobustnessCriteria:
     """Criteria for accepting a new model."""
 
@@ -25,9 +25,9 @@ class RobustnessCriteria:
 
 
 def passes_robustness_gate(
-    current_result: BacktestResult | None,
+    current_result: Optional[BacktestResult],
     new_result: BacktestResult,
-    criteria: RobustnessCriteria | None = None,
+    criteria: Optional[RobustnessCriteria] = None,
 ) -> tuple[bool, list[str]]:
     """
     Check if new model passes robustness gate vs current.

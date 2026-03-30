@@ -6,7 +6,7 @@ Uses Newton-Raphson with bisection fallback.
 from __future__ import annotations
 
 import math
-from typing import Literal
+from typing import Literal, Optional
 
 # Small epsilon to avoid div by zero
 _EPS = 1e-12
@@ -64,7 +64,7 @@ def implied_volatility(
     market_price: float,
     option_type: Literal["call", "put"] = "call",
     precision: float = _VOL_TOL,
-) -> float | None:
+) -> Optional[float]:
     """
     Solve for implied volatility given market price.
     Returns sigma (decimal, e.g. 0.25 for 25%) or None if no solution.

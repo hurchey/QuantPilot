@@ -7,10 +7,10 @@ Multiple NLP models check each other for robust sentiment scoring.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Optional
 
 
-@dataclass(slots=True)
+@dataclass
 class EnsembleResult:
     """Consensus sentiment result."""
 
@@ -22,7 +22,7 @@ class EnsembleResult:
     flags: list[str]
 
 
-def _vader_score(text: str) -> float | None:
+def _vader_score(text: str) -> Optional[float]:
     """VADER sentiment. Returns -1 to 1."""
     try:
         from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
@@ -33,7 +33,7 @@ def _vader_score(text: str) -> float | None:
         return None
 
 
-def _finbert_score(text: str) -> float | None:
+def _finbert_score(text: str) -> Optional[float]:
     """FinBERT sentiment. Returns -1 to 1."""
     try:
         from transformers import AutoTokenizer, AutoModelForSequenceClassification

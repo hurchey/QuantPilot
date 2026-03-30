@@ -10,7 +10,7 @@ Data sources (in order of preference):
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Optional
 
 import yfinance as yf
 from sqlalchemy.orm import Session
@@ -26,7 +26,7 @@ except Exception:
     _MARKETDATA_AVAILABLE = False
 
 
-def _safe_float(val: Any, default: float | None = None) -> float | None:
+def _safe_float(val: Any, default: Optional[float] = None) -> Optional[float]:
     if val is None or (isinstance(val, float) and (val != val)):  # NaN
         return default
     try:
@@ -35,7 +35,7 @@ def _safe_float(val: Any, default: float | None = None) -> float | None:
         return default
 
 
-def fetch_option_chain(symbol: str, expiry: str | None = None) -> dict[str, Any]:
+def fetch_option_chain(symbol: str, expiry: Optional[str] = None) -> dict[str, Any]:
     """
     Fetch option chain (live, not persisted).
     Uses Market Data API if MARKETDATA_API_KEY is set (reliable bid/ask);
@@ -147,7 +147,7 @@ def _enrich_option_with_greeks(
 
 def fetch_option_chain_with_greeks(
     symbol: str,
-    expiry: str | None = None,
+    expiry: Optional[str] = None,
     risk_free_rate: float = 0.05,
 ) -> dict[str, Any]:
     """
@@ -178,8 +178,8 @@ def compute_greeks_for_option(
     K: float,
     T: float,
     r: float,
-    sigma: float | None = None,
-    market_price: float | None = None,
+    sigma: Optional[float] = None,
+    market_price: Optional[float] = None,
     option_type: str = "call",
 ) -> dict[str, Any]:
     """
@@ -198,8 +198,8 @@ def persist_option_chain_snapshot(
     db: Session,
     workspace_id: int,
     symbol: str,
-    expiry: str | None = None,
-    snapshot_at: datetime | None = None,
+    expiry: Optional[str] = None,
+    snapshot_at: Optional[datetime] = None,
 ) -> dict[str, Any]:
     """
     Fetch option chain from yfinance and persist to OptionChainSnapshot.
@@ -287,7 +287,7 @@ def persist_option_chain_snapshot(
 def list_snapshots(
     db: Session,
     workspace_id: int,
-    symbol: str | None = None,
+    symbol: Optional[str] = None,
     limit: int = 50,
 ) -> list[dict[str, Any]]:
     """
@@ -322,7 +322,7 @@ def get_snapshot_chain(
     workspace_id: int,
     symbol: str,
     snapshot_at: datetime,
-    expiry: datetime | None = None,
+    expiry: Optional[datetime] = None,
 ) -> dict[str, Any]:
     """
     Retrieve a stored option chain snapshot.

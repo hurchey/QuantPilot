@@ -4,7 +4,7 @@ from __future__ import annotations
 import csv
 import io
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
@@ -164,8 +164,8 @@ def get_bars(
     workspace_id: int,
     symbol: str,
     timeframe: str = "1d",
-    start: str | None = None,
-    end: str | None = None,
+    start: Optional[str] = None,
+    end: Optional[str] = None,
     limit: int = 500,
 ) -> list[dict[str, Any]]:
     q = (

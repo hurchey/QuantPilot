@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 
-@dataclass(slots=True)
+@dataclass
 class Bar:
     timestamp: datetime
     open: float
@@ -15,7 +15,7 @@ class Bar:
     volume: float = 0.0
 
 
-@dataclass(slots=True)
+@dataclass
 class TradeEvent:
     timestamp: datetime
     symbol: str
@@ -23,11 +23,11 @@ class TradeEvent:
     qty: float
     price: float
     fee: float
-    realized_pnl: float | None = None
-    reason: str | None = None
+    realized_pnl: Optional[float] = None
+    reason: Optional[str] = None
 
 
-@dataclass(slots=True)
+@dataclass
 class EquityPoint:
     timestamp: datetime
     equity: float
@@ -37,7 +37,7 @@ class EquityPoint:
     drawdown: float = 0.0
 
 
-@dataclass(slots=True)
+@dataclass
 class BacktestConfig:
     symbol: str
     timeframe: str = "1d"
@@ -45,7 +45,7 @@ class BacktestConfig:
     fees_bps: float = 1.0
     slippage_bps: float = 1.0
     spread_bps: float = 0.0  # bid-ask half-spread
-    fixed_qty: float | None = None
+    fixed_qty: Optional[float] = None
     allow_fractional: bool = True
     close_final_position: bool = True
     risk_free_rate: float = 0.0  # annualized, e.g. 0.02 for 2%
@@ -60,7 +60,7 @@ class BacktestConfig:
     execution_delay_bars: int = 0  # bars before order fills (no lookahead)
 
 
-@dataclass(slots=True)
+@dataclass
 class BacktestResult:
     symbol: str
     timeframe: str

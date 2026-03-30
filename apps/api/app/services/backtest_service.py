@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -20,7 +20,7 @@ def utcnow_naive() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
-def parse_dt(value: Any, field_name: str) -> datetime | None:
+def parse_dt(value: Any, field_name: str) -> Optional[datetime]:
     if value is None or value == "":
         return None
     if isinstance(value, datetime):
@@ -211,7 +211,7 @@ def list_backtests(
     db: Session,
     *,
     workspace_id: int,
-    strategy_id: int | None = None,
+    strategy_id: Optional[int] = None,
     limit: int = 50,
 ) -> list[dict[str, Any]]:
     q = db.query(BacktestRun).filter(BacktestRun.workspace_id == workspace_id)

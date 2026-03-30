@@ -5,6 +5,8 @@ Uses config default or DB-stored rates.
 
 from __future__ import annotations
 
+from typing import Optional, Union
+
 from datetime import datetime, date, timezone
 
 from sqlalchemy.orm import Session
@@ -15,7 +17,7 @@ from ..models import RiskFreeRate
 
 def get_risk_free_rate(
     db: Session,
-    as_of: date | datetime | None = None,
+    as_of: Optional[Union[date, datetime]] = None,
 ) -> float:
     """
     Get risk-free rate for a given date.
@@ -40,7 +42,7 @@ def get_risk_free_rate(
 
 def set_risk_free_rate(
     db: Session,
-    rate_date: date | datetime,
+    rate_date: Union[date, datetime],
     rate: float,
     source: str = "manual",
 ) -> RiskFreeRate:
@@ -66,8 +68,8 @@ def set_risk_free_rate(
 
 def list_rates(
     db: Session,
-    start_date: date | None = None,
-    end_date: date | None = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
     limit: int = 100,
 ) -> list[dict]:
     """List stored risk-free rates."""

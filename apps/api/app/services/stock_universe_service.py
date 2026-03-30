@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import time
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
@@ -35,7 +35,7 @@ TIMEFRAME_MAP = {
 
 
 def get_active_symbols(
-    date: str | None = None,
+    date: Optional[str] = None,
     asset_types: tuple[str, ...] = ("Stock", "ETF"),
 ) -> list[str]:
     """
@@ -57,7 +57,7 @@ def fetch_bars_for_symbol(
     symbol: str,
     timeframe: str,
     outputsize: str = "compact",
-    month: str | None = None,
+    month: Optional[str] = None,
 ) -> list[dict[str, Any]]:
     """
     Fetch OHLCV bars for one symbol at given timeframe from Alpha Vantage.
@@ -182,7 +182,7 @@ def fetch_and_store_batch(
     timeframe: str = "1d",
     outputsize: str = "compact",
     rate_limit_delay: float = 12.5,
-    max_symbols: int | None = 50,
+    max_symbols: Optional[int] = 50,
 ) -> dict[str, Any]:
     """
     Batch fetch and store for multiple symbols.

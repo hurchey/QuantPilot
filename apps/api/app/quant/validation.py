@@ -10,14 +10,14 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, Optional, TypeVar
 
 from .types import Bar, BacktestConfig, BacktestResult
 
 T = TypeVar("T")
 
 
-@dataclass(slots=True)
+@dataclass
 class WalkForwardFold:
     """Single fold: train period, test period."""
 
@@ -76,7 +76,7 @@ def bootstrap_metric(
     equity_returns: list[float],
     metric_fn: Callable[[list[float]], float],
     n_bootstrap: int = 1000,
-    seed: int | None = None,
+    seed: Optional[int] = None,
 ) -> tuple[float, float, float]:
     """
     Bootstrap confidence interval for a metric.
@@ -106,7 +106,7 @@ def bootstrap_sharpe(
     n_bootstrap: int = 1000,
     risk_free_per_period: float = 0.0,
     periods_per_year: int = 252,
-    seed: int | None = None,
+    seed: Optional[int] = None,
 ) -> tuple[float, float, float]:
     """Bootstrap CI for annualized Sharpe ratio."""
     import math

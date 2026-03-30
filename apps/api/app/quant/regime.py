@@ -10,7 +10,7 @@ from typing import Any
 from .types import Bar
 
 
-@dataclass(slots=True)
+@dataclass
 class RegimeState:
     """Detected market regime."""
 

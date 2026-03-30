@@ -1,17 +1,20 @@
 fastapi==0.116.1
 uvicorn[standard]==0.35.0
 sqlalchemy==2.0.43
-psycopg2-binary==2.9.10
+psycopg[binary]>=3.1
 python-multipart==0.0.20
 python-jose[cryptography]==3.4.0
 passlib==1.7.4
 python-dotenv==1.1.1
+eval_type_backport>=0.3.0  # Python 3.9 compat for X | Y type syntax
 pyarrow>=14.0.0
 requests>=2.31.0
 yfinance>=0.2.0
 py_vollib>=1.0.1
 pandas>=2.0.0
 vaderSentiment>=3.3.2
+numpy>=1.24.0
+lxml>=4.9.0  # Required for pd.read_html (Wikipedia universe lists)
 # pytrends>=5.0.0  # Optional: Google Trends. Uncomment for search volume in sentiment.
 # transformers>=4.30.0  # Optional: FinBERT. Uncomment for ensemble NLP.
 # torch>=2.0.0  # Optional: Required for FinBERT.

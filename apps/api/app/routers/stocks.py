@@ -7,7 +7,7 @@ Alpha Vantage for quote, overview, time series, and technical indicators.
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Optional
 
 import yfinance as yf
 from fastapi import APIRouter, HTTPException, Query
@@ -47,7 +47,7 @@ INFO_KEYS = [
 ]
 
 
-def _safe_float(val: Any, default: float | None = None) -> float | None:
+def _safe_float(val: Any, default: Optional[float] = None) -> Optional[float]:
     if val is None:
         return default
     try:
@@ -58,7 +58,7 @@ def _safe_float(val: Any, default: float | None = None) -> float | None:
 
 def _get_at_extremes(
     ticker: yf.Ticker, symbol: str
-) -> dict[str, float | None]:
+) -> dict[str, Optional[float]]:
     """Compute all-time high/low from max historical data."""
     try:
         hist = ticker.history(period="max", auto_adjust=True)
@@ -128,7 +128,7 @@ def get_stock_info(symbol: str) -> dict[str, Any]:
 @router.get("/{symbol}/options")
 def get_stock_options(
     symbol: str,
-    expiry: str | None = Query(None, description="Options expiry date YYYY-MM-DD"),
+    expiry: Optional[str] = Query(None, description="Options expiry date YYYY-MM-DD"),
 ) -> dict[str, Any]:
     """
     Returns options chain for the symbol with optional Greeks.
@@ -190,7 +190,7 @@ def get_stock_options(
 @router.get("/{symbol}/greeks")
 def get_stock_greeks(
     symbol: str,
-    expiry: str | None = Query(None),
+    expiry: Optional[str] = Query(None),
 ) -> dict[str, Any]:
     """
     Returns ATM (at-the-money) options Greeks for the symbol.

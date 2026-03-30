@@ -12,12 +12,12 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Optional
 
 from .types import Bar
 
 
-@dataclass(slots=True)
+@dataclass
 class VolatilityProfile:
     """Volatility metrics for a single symbol."""
 
@@ -26,7 +26,7 @@ class VolatilityProfile:
     realized_vol_20d: float  # 20-day rolling vol
     volatility_label: str  # low, normal, high, extreme
     vs_average: float  # multiple of cross-sectional average (e.g. 1.2 = 20% above avg)
-    rank_percentile: float | None  # 0-100, higher = more volatile
+    rank_percentile: Optional[float]  # 0-100, higher = more volatile
 
 
 def returns_from_bars(bars: list[Bar]) -> list[float]:

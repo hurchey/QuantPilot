@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Optional
+
 from datetime import datetime
 
 from sqlalchemy.orm import Session
@@ -14,9 +16,9 @@ def load_market_bars(
     workspace_id: int,
     symbol: str,
     timeframe: str = "1d",
-    start_dt: datetime | None = None,
-    end_dt: datetime | None = None,
-    limit: int | None = None,
+    start_dt: Optional[datetime] = None,
+    end_dt: Optional[datetime] = None,
+    limit: Optional[int] = None,
 ) -> list[Bar]:
     """
     Loads historical bars from your SQLAlchemy MarketBar model and returns quant Bar objects.

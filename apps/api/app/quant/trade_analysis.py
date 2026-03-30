@@ -10,12 +10,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 from .types import Bar, TradeEvent
 
 
-@dataclass(slots=True)
+@dataclass
 class TradeContext:
     """Context around a single round-trip trade."""
 
@@ -41,7 +41,7 @@ def analyze_round_trip(
     buy_trade: TradeEvent,
     sell_trade: TradeEvent,
     bars: list[Bar],
-) -> TradeContext | None:
+) -> Optional[TradeContext]:
     """
     Analyze a buy->sell round trip. bars should cover [entry_ts, exit_ts].
     """

@@ -1,6 +1,8 @@
 # apps/api/app/config.py
 from __future__ import annotations
 
+from typing import Optional
+
 import os
 from dataclasses import dataclass
 
@@ -59,7 +61,7 @@ class Settings:
     # Cookie settings
     auth_cookie_name: str = os.getenv("AUTH_COOKIE_NAME", "access_token")
     cookie_secure: bool = _get_bool("COOKIE_SECURE", False)  # False for localhost
-    cookie_domain: str | None = os.getenv("COOKIE_DOMAIN", None)
+    cookie_domain: Optional[str] = os.getenv("COOKIE_DOMAIN", None)
     cookie_samesite: str = os.getenv("COOKIE_SAMESITE", "lax")  # "lax" is best for local dev
 
     def validate(self) -> None:

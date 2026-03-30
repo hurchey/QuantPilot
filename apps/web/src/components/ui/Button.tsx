@@ -23,19 +23,19 @@ export function Button({
   ...props
 }: ButtonProps) {
   const base =
-    "inline-flex items-center justify-center rounded-lg border font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed";
+    "inline-flex items-center justify-center border font-semibold uppercase tracking-[0.08em] transition-all disabled:opacity-40 disabled:cursor-not-allowed";
   const sizes = {
-    sm: "px-3 py-1.5 text-sm",
-    md: "px-4 py-2 text-sm",
+    sm: "px-3 py-1.5 text-[0.65rem]",
+    md: "px-4 py-2 text-[0.7rem]",
   } as const;
 
   const variants = {
-    primary: "bg-slate-100 text-slate-900 border-slate-100 hover:bg-white",
+    primary: "bg-white text-black border-white hover:bg-neutral-200 hover:shadow-[0_0_12px_rgba(255,255,255,0.1)]",
     secondary:
-      "bg-slate-900 text-slate-100 border-slate-700 hover:border-slate-500",
+      "bg-transparent text-neutral-300 border-neutral-700 hover:border-white hover:text-white",
     danger:
-      "bg-red-950/40 text-red-300 border-red-800 hover:bg-red-950/60 hover:border-red-700",
-    ghost: "bg-transparent text-slate-300 border-transparent hover:bg-slate-800",
+      "bg-transparent text-red-400 border-red-800 hover:bg-red-950/30 hover:border-red-600",
+    ghost: "bg-transparent text-neutral-500 border-transparent hover:text-white hover:bg-neutral-900",
   } as const;
 
   return (
@@ -44,7 +44,7 @@ export function Button({
       disabled={disabled || loading}
       {...props}
     >
-      {loading ? "Loading..." : children}
+      {loading ? "LOADING..." : children}
     </button>
   );
 }

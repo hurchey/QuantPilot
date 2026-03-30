@@ -22,20 +22,20 @@ export default function MetricCard({
 
   return (
     <div className={`qp-panel ${className}`}>
-      <div className="text-xs font-medium uppercase tracking-wide text-slate-400">
+      <div className="text-[0.6rem] font-semibold uppercase tracking-[0.15em] text-neutral-600">
         {displayLabel}
       </div>
 
-      <div className="mt-2 text-2xl font-semibold text-slate-100 break-words">
+      <div className="mt-2 text-xl font-bold text-white tracking-wide break-words">
         {value}
       </div>
 
       {subvalue ? (
-        <div className="mt-1 text-sm text-slate-300">{subvalue}</div>
+        <div className="mt-1 text-xs text-neutral-500">{subvalue}</div>
       ) : null}
 
       {helperText ? (
-        <div className="mt-2 text-xs text-slate-500">{helperText}</div>
+        <div className="mt-2 text-[0.65rem] text-neutral-700">{helperText}</div>
       ) : null}
     </div>
   );

@@ -233,3 +233,111 @@ class Dividend(Base):
     ex_date = Column(DateTime, nullable=False, index=True)
     amount = Column(Float, nullable=False)
     currency = Column(String(10), nullable=True, default="USD")
+
+
+# --- Extreme Dislocation Research ---
+
+
+class DislocationEvent(Base):
+    """
+    A single extreme upside dislocation event for a U.S.-listed equity.
+    Label A: 3-day return >= 500%
+    Label B: 3-day return >= 1000%
+    """
+
+    __tablename__ = "dislocation_events"
+    __table_args__ = (
+        UniqueConstraint("symbol", "event_start_date", name="uq_dislocation_event"),
+        Index("ix_dislocation_symbol_date", "symbol", "event_start_date"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Core identity
+    symbol = Column(String(50), nullable=False, index=True)
+    company_name = Column(String(500), nullable=True)
+    security_type = Column(String(50), nullable=True)  # common, ADR, SPAC, closed-end fund, etc.
+
+    # Event window
+    event_start_date = Column(DateTime, nullable=False, index=True)
+    event_end_date = Column(DateTime, nullable=False)
+    peak_date = Column(DateTime, nullable=True)
+
+    # Price data
+    price_start = Column(Float, nullable=False)
+    price_peak = Column(Float, nullable=False)
+    price_end_3d = Column(Float, nullable=True)  # close on day 3
+    return_1d_pct = Column(Float, nullable=True)
+    return_3d_pct = Column(Float, nullable=False)  # the qualifying return
+    return_peak_pct = Column(Float, nullable=True)  # intraday high vs start close
+
+    # Labels
+    label_a = Column(Integer, nullable=False, default=0)  # 1 if 3d return >= 500%
+    label_b = Column(Integer, nullable=False, default=0)  # 1 if 3d return >= 1000%
+    day_after_continuation = Column(Integer, nullable=True)  # 1=up, 0=down on day 4
+
+    # Volume profile
+    volume_event_day = Column(Float, nullable=True)
+    volume_avg_20d_pre = Column(Float, nullable=True)  # 20-day avg volume before event
+    volume_ratio = Column(Float, nullable=True)  # event day vol / avg
+
+    # Float & structure
+    shares_outstanding = Column(Float, nullable=True)
+    float_shares = Column(Float, nullable=True)
+    market_cap_pre = Column(Float, nullable=True)  # market cap before event
+    short_interest_shares = Column(Float, nullable=True)
+    short_pct_float = Column(Float, nullable=True)
+    days_to_cover = Column(Float, nullable=True)
+
+    # Fundamentals
+    sector = Column(String(100), nullable=True)
+    industry = Column(String(200), nullable=True)
+    exchange = Column(String(50), nullable=True)
+    ipo_date = Column(DateTime, nullable=True)
+    days_since_ipo = Column(Integer, nullable=True)
+
+    # Attention / news
+    catalyst_summary = Column(String(2000), nullable=True)  # manual or NLP-extracted
+    news_count_event_day = Column(Integer, nullable=True)
+
+    # Options context
+    options_available = Column(Integer, nullable=True)  # 1=yes, 0=no
+    iv_pre_event = Column(Float, nullable=True)
+    call_oi_pre = Column(Float, nullable=True)
+    put_oi_pre = Column(Float, nullable=True)
+
+    # Taxonomy
+    taxonomy_bucket = Column(String(100), nullable=True, index=True)
+    taxonomy_confidence = Column(Float, nullable=True)
+    taxonomy_notes = Column(String(2000), nullable=True)
+
+    # Meta
+    data_source = Column(String(100), nullable=True)  # yfinance, manual, SEC, etc.
+    created_at = Column(DateTime, default=utcnow, nullable=False)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow, nullable=False)
+
+    features = relationship("DislocationFeature", back_populates="event", cascade="all, delete-orphan")
+
+
+class DislocationFeature(Base):
+    """
+    Extensible key-value feature store for dislocation events.
+    Allows adding arbitrary features without schema migrations.
+    """
+
+    __tablename__ = "dislocation_features"
+    __table_args__ = (
+        UniqueConstraint("event_id", "feature_name", name="uq_dislocation_feature"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    event_id = Column(Integer, ForeignKey("dislocation_events.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    feature_name = Column(String(200), nullable=False, index=True)
+    feature_value = Column(String(2000), nullable=True)
+    feature_numeric = Column(Float, nullable=True)
+    feature_json = Column(JSON, nullable=True)
+
+    created_at = Column(DateTime, default=utcnow, nullable=False)
+
+    event = relationship("DislocationEvent", back_populates="features")

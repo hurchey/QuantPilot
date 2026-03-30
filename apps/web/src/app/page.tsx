@@ -3,35 +3,54 @@ import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <div className="space-y-6">
-      <section className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-        <h1 className="text-3xl font-bold mb-2">QuantPilot</h1>
-        <p className="text-slate-300">
-          A quant-focused full-stack SaaS app for uploading market data, defining trading strategies,
-          running backtests, and reviewing risk/performance metrics.
+    <div className="space-y-8 py-8">
+      <section className="border border-neutral-800 bg-neutral-950 p-8 relative">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-neutral-700 to-transparent" />
+        <h1 className="text-lg font-bold tracking-[0.15em] uppercase text-white">
+          QuantPilot
+        </h1>
+        <p className="text-[0.8rem] text-neutral-500 mt-2 max-w-xl leading-relaxed">
+          Quantitative research into extreme price dislocations. Discover events,
+          build filtered universes, classify by taxonomy, and analyze continuation patterns.
         </p>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Link href="/workflow" className="rounded-xl border border-slate-800 bg-slate-900 p-4 hover:border-slate-700">
-          <div className="font-semibold">1) Daily Workflow</div>
-          <div className="text-sm text-slate-400 mt-1">Follow the quant trader checklist</div>
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Link
+          href="/research"
+          className="border border-neutral-800 bg-neutral-950 p-5 hover:border-neutral-600 transition-all group relative"
+        >
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-neutral-700 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="text-[0.65rem] font-semibold uppercase tracking-[0.15em] text-neutral-500 mb-1">
+            Research Hub
+          </div>
+          <div className="text-sm text-neutral-300">
+            Scan symbols, view dislocation events, filter by label and taxonomy bucket.
+          </div>
         </Link>
-        <Link href="/auth/register" className="rounded-xl border border-slate-800 bg-slate-900 p-4 hover:border-slate-700">
-          <div className="font-semibold">2) Create Account</div>
-          <div className="text-sm text-slate-400 mt-1">Register and create your workspace</div>
+        <Link
+          href="/research/universe"
+          className="border border-neutral-800 bg-neutral-950 p-5 hover:border-neutral-600 transition-all group relative"
+        >
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-neutral-700 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="text-[0.65rem] font-semibold uppercase tracking-[0.15em] text-neutral-500 mb-1">
+            Universe Builder
+          </div>
+          <div className="text-sm text-neutral-300">
+            Build and manage filtered stock universes for systematic scanning.
+          </div>
         </Link>
-        <Link href="/data" className="rounded-xl border border-slate-800 bg-slate-900 p-4 hover:border-slate-700">
-          <div className="font-semibold">3) Upload Data</div>
-          <div className="text-sm text-slate-400 mt-1">Import OHLCV CSV files</div>
-        </Link>
-        <Link href="/strategies" className="rounded-xl border border-slate-800 bg-slate-900 p-4 hover:border-slate-700">
-          <div className="font-semibold">4) Build Strategy</div>
-          <div className="text-sm text-slate-400 mt-1">Define SMA crossover params</div>
-        </Link>
-        <Link href="/backtests" className="rounded-xl border border-slate-800 bg-slate-900 p-4 hover:border-slate-700">
-          <div className="font-semibold">5) Run Backtest</div>
-          <div className="text-sm text-slate-400 mt-1">Analyze metrics, trades, and equity</div>
+        <Link
+          href="/research"
+          className="border border-neutral-800 bg-neutral-950 p-5 hover:border-neutral-600 transition-all group relative"
+        >
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-neutral-700 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="text-[0.65rem] font-semibold uppercase tracking-[0.15em] text-neutral-500 mb-1">
+            Export Data
+          </div>
+          <div className="text-sm text-neutral-300">
+            Export filtered events as CSV or JSON for further analysis.
+          </div>
         </Link>
       </section>
     </div>

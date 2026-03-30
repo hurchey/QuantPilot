@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Optional, Union
+
 from .indicators import sma
 from .types import Bar
 
@@ -9,7 +11,7 @@ def generate_sma_crossover_positions(
     fast_window: int,
     slow_window: int,
     shift_for_execution: bool = True,
-) -> dict[str, list[int] | list[float | None]]:
+) -> dict[str, Union[list[int], list[Optional[float]]]]:
     """
     Returns desired positions:
       1 = long

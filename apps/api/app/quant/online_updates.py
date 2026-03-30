@@ -7,7 +7,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 
-@dataclass(slots=True)
+@dataclass
 class EWMAState:
     """Exponentially weighted moving average."""
 
@@ -26,7 +26,7 @@ def ewma_init(initial: float, alpha: float = 0.1) -> EWMAState:
     return EWMAState(value=initial, alpha=alpha)
 
 
-@dataclass(slots=True)
+@dataclass
 class RLSState:
     """Recursive least squares (single regressor)."""
 
